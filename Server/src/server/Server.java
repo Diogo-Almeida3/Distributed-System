@@ -3,6 +3,7 @@ package server;
 
 import java.io.*;
 import java.net.*;
+import java.sql.SQLException;
 
 import static server.Constants.*;
 
@@ -14,7 +15,7 @@ public class Server{
     private String sgbdIP;
 
 
-    public Server(String[] args) {
+    public Server(String[] args) throws SQLException {
         if(args.length != 1){
             this.grdsIp = args[0];
             this.grdsPort = Integer.parseInt(args[1]);
@@ -50,6 +51,9 @@ public class Server{
                 System.err.println(e.getMessage());
             }
         }
+
+        // Ligação à base de dados - Lança exceção para fora caso não consiga se conectar
+        DB db = new DB();
     }
 
     class ThreadReadMessages extends Thread{
