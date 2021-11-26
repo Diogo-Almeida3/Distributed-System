@@ -1,10 +1,10 @@
-package messageSystemPd.server;
+package server;
+
 
 import java.io.*;
 import java.net.*;
 
-import static messageSystemPd.server.Constants.*;
-
+import static server.Constants.*;
 
 public class Server{
 
@@ -78,4 +78,3 @@ public class Server{
         }
     }
 }
-
