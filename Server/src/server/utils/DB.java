@@ -1,4 +1,4 @@
-package server;
+package server.utils;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -7,7 +7,7 @@ import java.util.Scanner;
 public class DB {
     private final String DATABASE_URL = "jdbc:mysql://localhost:3306/mydb";
     private final String USERNAME = "root";
-    private final String PASSWORD = "vasco";
+    private final String PASSWORD = "dbpd";
 
     private Connection dbConn;
 

@@ -6,6 +6,14 @@ import java.util.ArrayList;
 
 public class ServerMain {
     public static void main(String[] args) {
+//        try {
+//            DB db = new DB();
+//            System.out.println(db.listUsers("João"));
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+
+
         try{
             if(args.length == 3 || args.length ==1 )
                 new Server(args);

@@ -5,7 +5,7 @@ import java.io.*;
 import java.net.*;
 import java.sql.SQLException;
 
-import static server.Constants.*;
+import static server.utils.Constants.*;
 
 public class Server{
 
@@ -54,31 +54,5 @@ public class Server{
 
         // Ligação à base de dados - Lança exceção para fora caso não consiga se conectar
         DB db = new DB();
-    }
-
-    class ThreadReadMessages extends Thread{
-        @Override
-        public void run(){
-            try{
-                //TODO COMO FAZER ESTE CICLO?
-                for(int i = 0; i < 3; i++){
-                    DatagramPacket dp = new DatagramPacket(new byte[255],255);
-                    ms.receive(dp);
-
-                    ByteArrayInputStream bais = new ByteArrayInputStream(dp.getData(),0,dp.getLength());
-                    ObjectInputStream ois = new ObjectInputStream(bais);
-                    Object o = ois.readObject();
-
-                    if(o instanceof String){
-                        String msg = (String) o;
-                        String[] coordinates = msg.split(" ");
-                        grdsIp = coordinates[0];
-                        grdsPort = Integer.parseInt(coordinates[1]);
-                    }
-                }
-            } catch (IOException | ClassNotFoundException e){
-                System.err.println(e.getMessage());
-            }
-        }
     }
 }

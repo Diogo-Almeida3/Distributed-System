@@ -1,5 +1,6 @@
 package grds;
 
+import grds.data.InitData.InitData;
 import grds.data.ServerData;
 
 import java.io.ByteArrayInputStream;
@@ -46,10 +47,54 @@ public class Grds {
             System.err.println("You cannot run more than one GRDS");
         }
         servers = new ArrayList<>();
+
+
+
+
+
+
+
     }
 
 
 
-//    private class ServerData
+    class ThreadReceivedServers extends Thread {
+        private boolean run = true;
+
+        public void setRun(boolean run) {
+            this.run = run;
+        }
+
+
+        @Override
+        public void run() {
+            while (run) {
+                DatagramPacket datagramPacket = new DatagramPacket(new byte[256],256);
+                try {
+                    datagramSocket.receive(datagramPacket);
+                    ByteArrayInputStream bais = new ByteArrayInputStream(datagramPacket.getData(),0 ,datagramPacket.getLength());
+                    ObjectInputStream oin = new ObjectInputStream(bais);
+                    InitData newServer = (InitData) oin.readObject();
+//                    for (ServerData serv : servers) // Test if the server is already registered
+//                        if (serv.getAddress().equals(newServer.getAddress())) throw new Exception("The server with ip:"+newServer.getAddress().getHostAddress()+" is already registered!");
+                    switch (newServer.getType()) {
+                        case CLIENT -> {
+
+                        }
+                        case SERVER -> {
+                            servers.add(new ServerData(newServer.getAddress(), newServer.getPort())); // Add server to list of active servers
+                        }
+                        default -> {
+                            System.err.println("Not Client or Server connect....");
+                        }
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    System.err.println("It was not possible to receive the information from the server with the ip: " + datagramSocket.getInetAddress().getHostAddress());
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+        }
+    }
 
 }
