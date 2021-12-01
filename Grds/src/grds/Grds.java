@@ -3,6 +3,7 @@ package grds;
 import grds.data.InitData.InitData;
 import grds.data.ServerData;
 
+import javax.naming.OperationNotSupportedException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -29,12 +30,6 @@ public class Grds {
      * Recebe via UDP uma mensagem do servidor a informar que a base de dados foi alterada e rencaminha para os restantes servidores (Se forem ficheiros - ver enunciado)
      * Recebe via UDP uma mensagem a solicitar a eliminaçao dos ficheiros e esta mensagem inclui a indicação para avisar todos os outros servidores
      * Trata do encerramento organizado de um servidor
-     */
-
-    /*
-    DONE: Thread que recebe os servidores (unicast) e adição dos novos servidores no array servers
-    TODO: Thread que recebe os servidores em multicast & Thread que recebe os clientes e encaminha para os servidores
-
      */
 
     private ArrayList<ServerData> servers; // Active Servers
@@ -79,6 +74,8 @@ public class Grds {
 //                        if (serv.getAddress().equals(newServer.getAddress())) throw new Exception("The server with ip:"+newServer.getAddress().getHostAddress()+" is already registered!");
                     switch (newServer.getType()) {
                         case CLIENT -> {
+                            ServerData serv = getServer();
+                            // Send info to client
 
                         }
                         case SERVER -> {
@@ -97,4 +94,17 @@ public class Grds {
         }
     }
 
+    private ServerData getServer() throws OperationNotSupportedException {
+        if (servers.isEmpty())
+            throw new OperationNotSupportedException();
+        int minCli = -1;
+        ServerData servMin = null;
+        for (ServerData serv : servers) {
+            if (serv.getNumCli() < minCli) {
+                minCli = serv.getNumCli();
+                servMin = serv;
+            }
+        }
+        return servMin;
+    }
 }
