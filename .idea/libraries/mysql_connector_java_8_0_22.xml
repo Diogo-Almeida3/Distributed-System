@@ -4,6 +4,8 @@
       <root url="jar://$PROJECT_DIR$/Server/mysql-connector-java-8.0.22.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/Global/src" />
+    </SOURCES>
   </library>
 </component>
