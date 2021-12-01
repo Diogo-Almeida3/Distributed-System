@@ -54,7 +54,6 @@ public class Grds {
     }
 
 
-
     class ThreadReceivedServers extends Thread {
         private boolean run = true;
 
@@ -62,14 +61,13 @@ public class Grds {
             this.run = run;
         }
 
-
         @Override
         public void run() {
             while (run) {
-                DatagramPacket datagramPacket = new DatagramPacket(new byte[256],256);
                 try {
                     DatagramPacket datagramPacket = new DatagramPacket(new byte[5000], 5000);
                     datagramSocket.receive(datagramPacket);
+
                     ByteArrayInputStream bais = new ByteArrayInputStream(datagramPacket.getData(),0 ,datagramPacket.getLength());
                     ObjectInputStream oin = new ObjectInputStream(bais);
                     ComData newServer = (ComData) oin.readObject();

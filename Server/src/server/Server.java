@@ -19,6 +19,14 @@ public class Server {
     private String sgbdIP;
     private ServerSocket socketReceiveConnections;
 
+
+    /*
+    * 1 -> Ligar o Servidor ✔
+    * 2 -> Tratar das coordenadas ✔
+    * 3 -> Ligar-se a um socket udp com o Grds ✔
+    * 4 -> Enviar o porto TCP para o grds conseguir informar os clientes ✔️
+    * 5 -> ...
+    */
     public Server(String[] args) throws SQLException {
         int tries = 0;
         Thread threadPing;
@@ -46,11 +54,14 @@ public class Server {
                     InetAddress ipBroadCast = InetAddress.getByName(MULTICAST_IP);
                     DatagramPacket dpReq = new DatagramPacket(udpBytes, udpBytes.length, ipBroadCast, MULTICAST_PORT);
                     ms.send(dpReq);
+                    System.out.println("Sending multicast request to grds...");
                     ms.close();
+
 
                     ds = new DatagramSocket(MULTICAST_PORT);
                     ds.setSoTimeout(3000);
                     DatagramPacket dpResp = new DatagramPacket(new byte[256], 256);
+                    System.out.println("Waiting for response...");
                     ds.receive(dpResp);
                     ds.close();
 
@@ -75,11 +86,17 @@ public class Server {
                     e.printStackTrace();
                 }
             }
-
-            threadPing = new ThreadPing(socketReceiveConnections,grdsIp,grdsPort);
-            threadPing.start();
         }
+        threadPing = new ThreadPing(socketReceiveConnections,grdsIp,grdsPort);
+        threadPing.start();
+        try {
+            synchronized (threadPing){
+                threadPing.wait();
+            }
 
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         // Ligação à base de dados - Lança exceção para fora caso não consiga se conectar
         DB db = new DB();
     }
