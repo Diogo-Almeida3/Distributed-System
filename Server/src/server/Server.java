@@ -1,55 +1,83 @@
 package server;
 
 
+import server.utils.DB;
+
 import java.io.*;
 import java.net.*;
 import java.sql.SQLException;
+import server.threads.ThreadPing;
+import java.sql.Time;
 
 import static server.utils.Constants.*;
 
-public class Server{
+public class Server {
 
     MulticastSocket ms;
     private int grdsPort;
     private String grdsIp;
     private String sgbdIP;
-
+    private ServerSocket socketReceiveConnections;
 
     public Server(String[] args) throws SQLException {
-        if(args.length != 1){
+        int tries = 0;
+        Thread threadPing;
+        try {
+            socketReceiveConnections = new ServerSocket(9001);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (args.length != 1) {
             this.grdsIp = args[0];
             this.grdsPort = Integer.parseInt(args[1]);
             this.sgbdIP = args[2];
-        } else{
-            //todo Transmite um pedido multicast para o endereço 230.30.30.30 e Porto UDP
-            // Senão transmitir resposta ao fim de três tentativas consecutivas, termina |
-            // se obtiver resposta grava o endereço ip e o porto do GRDS
-            try{
-                ms = new MulticastSocket(MULTICAST_PORT);
-                InetAddress ip = InetAddress.getByName(MULTICAST_IP);
-                InetSocketAddress isa = new InetSocketAddress(ip,MULTICAST_PORT);
-                NetworkInterface ni = NetworkInterface.getByName("wlan0");
-                ms.joinGroup(isa,ni);
+        } else { //3030 | 230.30.30.30
+            this.sgbdIP = args[0];
+            MulticastSocket ms = null;
+            DatagramSocket ds = null;
 
+            while (true) {
+                try {
 
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ObjectOutputStream oos = new ObjectOutputStream(baos);
+                    /* Envia por multicast um pedido ao GRDS */
+                    ms = new MulticastSocket(MULTICAST_PORT);
+                    byte[] udpBytes = ("REQUEST").getBytes();
+                    InetAddress ipBroadCast = InetAddress.getByName(MULTICAST_IP);
+                    DatagramPacket dpReq = new DatagramPacket(udpBytes, udpBytes.length, ipBroadCast, MULTICAST_PORT);
+                    ms.send(dpReq);
+                    ms.close();
 
-                System.out.println("Requesting GRDS Coordinates...");
+                    ds = new DatagramSocket(MULTICAST_PORT);
+                    ds.setSoTimeout(3000);
+                    DatagramPacket dpResp = new DatagramPacket(new byte[256], 256);
+                    ds.receive(dpResp);
+                    ds.close();
 
+                    String grdsPort = new String(dpResp.getData(), 0, dpResp.getLength());
+                    this.grdsPort = Integer.parseInt(grdsPort);
+                    this.grdsIp = String.valueOf(dpResp.getAddress());
+                    break;
+                } catch (SocketTimeoutException e) {
+                    System.err.println("Response time passed trying again...");
+                    if (++tries >= 3){
+                        try {
+                            socketReceiveConnections.close();
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+                        return;
+                    }
+                    assert ds != null;
+                    ds.close();
 
-                /* Enviamos uma mensagem a fazer um pedido e aguardamos por resposta */
-                for(int i = 0; i < 3; i++ ){
-                    String mensagem = "REQUEST";
-                    oos.writeObject(mensagem);
-                    oos.flush();
-                    byte[] msgBytes = baos.toByteArray();
-                    DatagramPacket dp = new DatagramPacket(msgBytes, msgBytes.length,ip,MULTICAST_PORT);
-                    ms.send(dp);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException e){
-                System.err.println(e.getMessage());
             }
+
+            threadPing = new ThreadPing(socketReceiveConnections,grdsIp,grdsPort);
+            threadPing.start();
         }
 
         // Ligação à base de dados - Lança exceção para fora caso não consiga se conectar
