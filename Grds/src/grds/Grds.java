@@ -1,15 +1,13 @@
 package grds;
 
-import data.ComData;
+import data.Cli2Grds;
+import data.Serv2Grds;
 import grds.data.ServerData;
+import grds.threads.ThreadMulticast;
 
 import javax.naming.OperationNotSupportedException;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
+import java.io.*;
+import java.net.*;
 import java.util.ArrayList;
 
 public class Grds {
@@ -33,24 +31,34 @@ public class Grds {
 
     private ArrayList<ServerData> servers; // Active Servers
     private DatagramSocket datagramSocket;
+    private final int MYPORT = 9001;
 
     public Grds() {
         try { // TODO: Porta como argumento
-            datagramSocket = new DatagramSocket(9001); // If it is not possible to open on this port it could mean that there is already an instance of grds running
+            datagramSocket = new DatagramSocket(MYPORT); // If it is not possible to open on this port it could mean that there is already an instance of grds running
         } catch (SocketException e) {
             System.err.println("You cannot run more than one GRDS");
             return;
         }
         servers = new ArrayList<>();
+
+
+        // ========================== Threads ==========================
         ThreadReceivedServers threadReceivedServers = new ThreadReceivedServers();
         threadReceivedServers.start();
+        ThreadMulticast threadMulticast = new ThreadMulticast(MYPORT);
+        threadMulticast.start();
         try {
             synchronized (threadReceivedServers) {
                 threadReceivedServers.wait();
             }
+            synchronized (threadMulticast) {
+                threadMulticast.wait();
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        // ===============================================================
     }
 
 
@@ -70,32 +78,65 @@ public class Grds {
 
                     ByteArrayInputStream bais = new ByteArrayInputStream(datagramPacket.getData(),0 ,datagramPacket.getLength());
                     ObjectInputStream oin = new ObjectInputStream(bais);
-                    ComData newServer = (ComData) oin.readObject();
-//                    String teste = (String) oin.readObject();
-//                    System.out.println(teste);
-//                    for (ServerData serv : servers) // Test if the server is already registered
-//                        if (serv.getAddress().equals(newServer.getAddress())) throw new Exception("The server with ip:"+newServer.getAddress().getHostAddress()+" is already registered!");
-                    switch (newServer.getType()) {
-                        case CLIENT -> {
-                            synchronized (servers) {
-                                ServerData serv = getServer();
-                            }
-                            // Send info to client
+                    Object systemReq = oin.readObject();
 
-                        }
-                        case SERVER -> {
-                            synchronized (servers) {
-                                System.out.println(datagramPacket.getAddress().getHostAddress() + ":" + datagramPacket.getPort());
-                                servers.add(new ServerData(datagramPacket.getAddress(), newServer.getPort())); // Add server to list of active servers
+                    // ======================== Server Communication ========================
+                    if (systemReq instanceof Serv2Grds) {
+                        Serv2Grds data = (Serv2Grds) systemReq;
+
+                        switch (data.getRequest()) {
+                            case REGISTER -> {
+                                synchronized (servers) {
+                                    servers.add(new ServerData(datagramPacket.getAddress(), data.getPort())); // Add server to list of active servers
+                                }
+                                System.out.println("New Server Registered! --> " + datagramPacket.getAddress().getHostAddress() + ":" + data.getPort());
                             }
-                            System.out.println("New Server Registered");
-                        }
-                        default -> {
-                            System.err.println("Not Client or Server connect....");
+                            case PING -> {
+                                System.out.println("Ping! --> " + datagramPacket.getAddress().getHostAddress());
+                            }
+                            default -> System.err.println("Request of server "+datagramPacket.getAddress().getHostAddress()+"is not possible");
                         }
                     }
+                    // ====================== End Server Communication =======================
+
+
+                    // ======================== Client Communication ========================
+                    else if (systemReq instanceof Cli2Grds) {
+                        Cli2Grds data = (Cli2Grds) systemReq;
+                        DatagramSocket ds = new DatagramSocket();
+                        try {
+                            ServerData serv = null;
+                            synchronized (servers) {
+                                serv = getServer();
+                                serv.newClient();
+                            }
+                            Cli2Grds send2cli = new Cli2Grds(serv.getAddress(),serv.getPort());
+
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+                            oos.writeObject(send2cli);
+                            oos.flush();
+
+                            datagramPacket.setData(baos.toByteArray());
+                            datagramPacket.setLength(baos.size());
+                            java.lang.System.out.println("Server "+serv.getAddress().getHostAddress()+" assigned to client " + datagramPacket.getAddress().getHostAddress());
+                             ds.send(datagramPacket);
+
+                        } catch (OperationNotSupportedException e) { // No active servers, informs client to terminate
+                            datagramPacket.setData(new byte[0]);
+                            datagramPacket.setLength(0);
+                            ds.send(datagramPacket);
+                            System.err.println("No active servers!");
+                        }
+                    }
+                    // ======================= END Client Communication ======================
+
+
+                    else {
+                        System.err.println("Not Client or Server connect....");
+                    }
                 } catch (IOException e) {
-                    e.printStackTrace();
                     System.err.println("It was not possible to receive the information from the server.");
                 } catch (Exception e) {
                     System.err.println(e.getMessage());
@@ -107,8 +148,8 @@ public class Grds {
     private ServerData getServer() throws OperationNotSupportedException {
         if (servers.isEmpty())
             throw new OperationNotSupportedException();
-        int minCli = -1;
-        ServerData servMin = null;
+        ServerData servMin = servers.get(0);
+        int minCli = servMin.getNumCli();
         for (ServerData serv : servers) {
             if (serv.getNumCli() < minCli) {
                 minCli = serv.getNumCli();

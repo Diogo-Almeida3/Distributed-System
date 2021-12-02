@@ -1,7 +1,7 @@
 package server.threads;
 
 
-import data.ComData;
+import data.Serv2Grds;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -13,6 +13,7 @@ public class ThreadPing extends Thread {
     private int grdsPort;
     private String grdsIp;
     private ServerSocket socketReceiveConnections;
+    private boolean isRegisted = false;
 
     public ThreadPing(ServerSocket socketReceiveConnections, String grdsIp, int grdsPort) {
         this.grdsIp = grdsIp;
@@ -24,7 +25,8 @@ public class ThreadPing extends Thread {
     public void run() {
         while (true) {
             try {
-                ComData tcpPort = new ComData(socketReceiveConnections.getLocalPort(), ComData.typeInitData.SERVER);
+                Serv2Grds tcpPort = new Serv2Grds(isRegisted ? Serv2Grds.Request.PING : Serv2Grds.Request.REGISTER,socketReceiveConnections.getLocalPort());
+                isRegisted = true;
                 DatagramSocket ds = new DatagramSocket();
 
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -35,10 +37,10 @@ public class ThreadPing extends Thread {
 
                 DatagramPacket dpResp = new DatagramPacket(baos.toByteArray(), baos.size(),
                         InetAddress.getByName(grdsIp), grdsPort);
-                System.out.println("Sending my tcp port to the GRDS...");
+                java.lang.System.out.println("Sending my tcp port to the GRDS...");
                 ds.send(dpResp);
 
-                Thread.sleep(5 * 1000); //todo mudar para 20 segundos
+                Thread.sleep(20 * 1000);
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }

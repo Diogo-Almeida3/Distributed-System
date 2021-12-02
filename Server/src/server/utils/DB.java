@@ -2,7 +2,7 @@ package server.utils;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.Calendar;
 
 public class DB {
     private final String DATABASE_URL = "jdbc:mysql://localhost:3306/mydb";

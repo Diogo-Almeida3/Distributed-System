@@ -1,10 +1,17 @@
 package server;
 
+import server.utils.DB;
+
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 
 public class ServerMain {
     public static void main(String[] args) {
+
         try{
             if(args.length == 3 || args.length ==1 )
                 new Server(args);
