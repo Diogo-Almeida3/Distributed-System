@@ -20,6 +20,8 @@ public class ThreadClient extends Thread {
     private Socket sCli;
     private DB db;
 
+    private String username = null;
+
     public ThreadClient(Socket sCli, DB db) {
         this.sCli = sCli;
         this.db = db;
@@ -31,21 +33,39 @@ public class ThreadClient extends Thread {
 
     @Override
     public void run() {
+        ObjectOutputStream oos = null;
+        ObjectInputStream ois = null;
+        Cli2Serv cliMessage = null;
+
+
+        try {
+            oos = new ObjectOutputStream(sCli.getOutputStream());
+            ois = new ObjectInputStream(sCli.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         while (!exit) {
-            ObjectOutputStream oos = null;
-            ObjectInputStream ois = null;
-            Cli2Serv cliMessage = null;
+
             try {
                 //todo quando acontece um update na db o sv tem de conseguir avisar todos os outros desse update
-                oos = new ObjectOutputStream(sCli.getOutputStream());
-                ois = new ObjectInputStream(sCli.getInputStream());
-                if(!sCli.isClosed())
+                try {
                     cliMessage = (Cli2Serv) ois.readObject();
+                } catch (SocketException e) { // TODO: Mudar estado do utilizador para offline quando se perde a conexão
+                    try {
+                        db.updateState(username, false);
+                        System.out.println("User: " + username + " left...");
+                    } catch (SQLException exception) {
+                        System.err.println("Error while login...");
+                    }
+                    exit = true;
+                    break;
+                }
 
                 switch (cliMessage.getRequestType()) {
                     case REGISTER -> {
                         Cli2ServReg regData = (Cli2ServReg) cliMessage;
-                        String username = regData.getUsername();
+                        username = regData.getUsername();
                         try {
                             if (db.registUser(regData.getUsername(), regData.getName(), regData.getPassword())) {
                                 db.updateState(username, true);
@@ -63,7 +83,7 @@ public class ThreadClient extends Thread {
                     }
                     case LOGIN -> {
                         Cli2ServLog logData = (Cli2ServLog) cliMessage;
-                        String username = logData.getUsername();
+                        username = logData.getUsername();
                         try {
                             if (db.loginUser(username, logData.getPassword())) {
                                 db.updateState(username, true);
@@ -108,6 +128,7 @@ public class ThreadClient extends Thread {
                     case EXIT -> {
                         Cli2ServExit cli2ServExit = (Cli2ServExit) cliMessage;
                         try {
+                            sCli.close();
                             db.updateState(cli2ServExit.getUsername(), false);
                             System.out.println("User: " + cli2ServExit.getUsername() + " left...");
                         } catch (SQLException e) {
