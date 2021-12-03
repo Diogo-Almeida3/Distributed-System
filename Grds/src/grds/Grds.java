@@ -31,13 +31,25 @@ public class Grds {
 
     private ArrayList<ServerData> servers; // Active Servers
     private DatagramSocket datagramSocket;
-    private final int MYPORT = 9001;
+    private int myport;
 
-    public Grds() {
-        try { // TODO: Porta como argumento
-            datagramSocket = new DatagramSocket(MYPORT); // If it is not possible to open on this port it could mean that there is already an instance of grds running
+    public static void main(String[] args) {
+        if (args.length == 0) {
+            System.err.println("Invalid arguments! <GRDS_PORT>");
+            return;
+        }
+        new Grds(args);
+    }
+
+    public Grds(String[] args) {
+        try {
+            myport = Integer.parseInt(args[0]);
+            datagramSocket = new DatagramSocket(myport); // If it is not possible to open on this port it could mean that there is already an instance of grds running
         } catch (SocketException e) {
             System.err.println("You cannot run more than one GRDS");
+            return;
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid arguments! <GRDS_PORT>");
             return;
         }
         servers = new ArrayList<>();
@@ -46,8 +58,9 @@ public class Grds {
         // ========================== Threads ==========================
         ThreadReceivedServers threadReceivedServers = new ThreadReceivedServers();
         threadReceivedServers.start();
-        ThreadMulticast threadMulticast = new ThreadMulticast(MYPORT);
+        ThreadMulticast threadMulticast = new ThreadMulticast(myport);
         threadMulticast.start();
+        System.out.println("============================== GRDS Ready ==============================");
         try {
             synchronized (threadReceivedServers) {
                 threadReceivedServers.wait();
@@ -59,6 +72,7 @@ public class Grds {
             e.printStackTrace();
         }
         // ===============================================================
+
     }
 
 

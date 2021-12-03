@@ -31,7 +31,7 @@ public class Server {
         int tries = 0;
         Thread threadPing;
         try {
-            socketReceiveConnections = new ServerSocket(9001);
+            socketReceiveConnections = new ServerSocket(0);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -40,6 +40,7 @@ public class Server {
             this.grdsIp = args[0];
             this.grdsPort = Integer.parseInt(args[1]);
             this.sgbdIP = args[2];
+            System.out.println("GRDS Coordinates: " + grdsIp + ":" + grdsPort + " | SGDB Ip: " + sgbdIP);
         } else { //3030 | 230.30.30.30
             this.sgbdIP = args[0];
             MulticastSocket ms = null;
@@ -48,15 +49,17 @@ public class Server {
             while (true) {
                 try {
                     ds = new DatagramSocket(0);
-                    /* Envia por multicast um pedido ao GRDS */
+                    /* Multicast sends a request to GRDS */
                     ms = new MulticastSocket(MULTICAST_PORT);
                     InetAddress ipBroadCast = InetAddress.getByName(MULTICAST_IP);
-                    DatagramPacket dpReq = new DatagramPacket(new byte[256], 256, ipBroadCast, MULTICAST_PORT);
+
 
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ObjectOutputStream oos = new ObjectOutputStream(baos);
-                    oos.writeObject(ds.getPort());
+                    oos.writeObject(ds.getLocalPort());
                     oos.flush();
+
+                    DatagramPacket dpReq = new DatagramPacket(baos.toByteArray(), baos.size(), ipBroadCast, MULTICAST_PORT);
 
                     ms.send(dpReq);
                     System.out.println("Sending multicast request to grds...");
@@ -72,10 +75,11 @@ public class Server {
                     ByteArrayInputStream bais = new ByteArrayInputStream(dpResp.getData(),0 ,dpResp.getLength());
                     ObjectInputStream oin = new ObjectInputStream(bais);
 
-                    Integer msgReceived = (Integer) oin.readObject();
+                    Integer portReceived = (Integer) oin.readObject();
 
-                    this.grdsPort = msgReceived;
-                    this.grdsIp = String.valueOf(dpResp.getAddress());
+                    this.grdsPort = portReceived;
+                    this.grdsIp = dpResp.getAddress().getHostAddress();
+                    System.out.println("GRDS Coordinates: " + grdsIp + ":" + grdsPort + " | SGDB Ip: " + sgbdIP);
                     break;
                 } catch (SocketTimeoutException e) {
                     System.err.println("Response time passed trying again...");
@@ -90,22 +94,43 @@ public class Server {
                     assert ds != null;
                     ds.close();
 
-                } catch (IOException e) {
+                } catch (IOException | ClassNotFoundException e) {
+                    System.err.println("erro pesadao");
                     e.printStackTrace();
                 }
             }
         }
+
+        DB db = new DB();
         threadPing = new ThreadPing(socketReceiveConnections,grdsIp,grdsPort);
         threadPing.start();
-        try {
-            synchronized (threadPing){
-                threadPing.wait();
-            }
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        while(true){
+            try {
+                Socket sCli = socketReceiveConnections.accept();
+
+                ThreadClient threadClient = new ThreadClient(sCli,db);
+                threadClient.start();
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         // Ligação à base de dados - Lança exceção para fora caso não consiga se conectar
-        DB db = new DB();
+
+    }
+
+    public static void main(String[] args) {
+        try{
+            if(args.length == 3 || args.length ==1 )
+                new Server(args);
+            else
+                throw new IllegalArgumentException("Invalid arguments! You must use one of the following formatting: <IP_GRDS> <Port_GRDS> <IP_SBGD> OR <IP_SGBD>");
+        } catch (IllegalArgumentException e){
+            System.err.println(e.getMessage());
+        } catch (SQLException throwables) {
+            System.err.println("Unable to connect to the database!");
+        }
     }
 }

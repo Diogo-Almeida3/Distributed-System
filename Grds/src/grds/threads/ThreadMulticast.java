@@ -17,7 +17,9 @@ public class ThreadMulticast extends Thread {
     @Override
     public void run() {
         MulticastSocket ms = null;
+        DatagramSocket ds = null;
         try {
+            // Receive request on multicast
             ms = new MulticastSocket(MULTICAST_PORT);
             InetAddress mulIP = InetAddress.getByName(MULTICAST_IP);
             InetSocketAddress isa = new InetSocketAddress(mulIP,MULTICAST_PORT);
@@ -32,6 +34,7 @@ public class ThreadMulticast extends Thread {
 
             Integer port = (Integer) oin.readObject();
 
+            // Send port to server
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
             oos.writeObject(myPort);
@@ -40,12 +43,17 @@ public class ThreadMulticast extends Thread {
             dp.setPort(port);
             dp.setData(baos.toByteArray());
             dp.setLength(baos.size());
-            ms.send(dp);
 
-
-            // TODO mandar para para socket em unicast e não multicast
+            ds = new DatagramSocket(0);
+            ds.send(dp);
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
+        } finally {
+            if (ms != null)
+                ms.close();
+
+            if (ds != null)
+                ds.close();
         }
     }
 }

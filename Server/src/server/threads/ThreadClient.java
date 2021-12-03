@@ -1,0 +1,141 @@
+package server.threads;
+
+import data.cli2serv.Cli2Serv;
+import data.cli2serv.Cli2ServExit;
+import data.cli2serv.Cli2ServLog;
+import data.cli2serv.Cli2ServReg;
+import server.utils.DB;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.sql.SQLException;
+
+public class ThreadClient extends Thread {
+
+    private boolean exit = false;
+
+    private Socket sCli;
+    private DB db;
+
+    public ThreadClient(Socket sCli, DB db) {
+        this.sCli = sCli;
+        this.db = db;
+    }
+
+    public void setExit(boolean exit) {
+        this.exit = exit;
+    }
+
+    @Override
+    public void run() {
+        while (!exit) {
+            ObjectOutputStream oos = null;
+            ObjectInputStream ois = null;
+            Cli2Serv cliMessage = null;
+            try {
+                //todo quando acontece um update na db o sv tem de conseguir avisar todos os outros desse update
+                oos = new ObjectOutputStream(sCli.getOutputStream());
+                ois = new ObjectInputStream(sCli.getInputStream());
+                if(!sCli.isClosed())
+                    cliMessage = (Cli2Serv) ois.readObject();
+
+                switch (cliMessage.getRequestType()) {
+                    case REGISTER -> {
+                        Cli2ServReg regData = (Cli2ServReg) cliMessage;
+                        String username = regData.getUsername();
+                        try {
+                            if (db.registUser(regData.getUsername(), regData.getName(), regData.getPassword())) {
+                                db.updateState(username, true);
+                                oos.writeObject(true);
+                                System.out.println("User: " + username + "registed successfully");
+                            } else {
+                                oos.writeObject(false);
+                                System.out.println("User failed regist...");
+                            }
+                        } catch (SQLException e) {
+                            System.err.println("Error while registering a new user...");
+                        } catch (SocketException e) {
+                            exit = true;
+                        }
+                    }
+                    case LOGIN -> {
+                        Cli2ServLog logData = (Cli2ServLog) cliMessage;
+                        String username = logData.getUsername();
+                        try {
+                            if (db.loginUser(username, logData.getPassword())) {
+                                db.updateState(username, true);
+                                oos.writeObject(true);
+                                System.out.println("User: " + username + " logged successfully");
+                            } else {
+                                oos.writeObject(false);
+                                System.out.println("User failed login...");
+                            }
+                        } catch (SQLException e) {
+                            System.err.println("Error while login...");
+                        } catch (SocketException e) {
+                            exit = true;
+                        }
+                    }
+                    case SEARCH_USER -> {
+                    }
+                    case LIST_USERS -> {
+                    }
+                    case EDIT_USER -> {
+                    }
+                    case ADD_CONTACT -> {
+                    }
+                    case LIST_CONTACT -> {
+                    }
+                    case DELETE_CONTACT -> {
+                    }
+                    case CREATE_GROUP -> {
+                    }
+                    case JOIN_GROUP -> {
+                    }
+                    case LIST_GROUPS -> {
+                    }
+                    case EDIT_GROUP -> {
+                    }
+                    case LEAVE_GROUP -> {
+                    }
+                    case CONTACT_REQUEST -> {
+                    }
+                    case SEND_MESSAGE -> {
+                    }
+                    case EXIT -> {
+                        Cli2ServExit cli2ServExit = (Cli2ServExit) cliMessage;
+                        try {
+                            db.updateState(cli2ServExit.getUsername(), false);
+                            System.out.println("User: " + cli2ServExit.getUsername() + " left...");
+                        } catch (SQLException e) {
+                            System.err.println("Error while login...");
+                        }
+                        exit = true;
+                        // TODO: Informar GRDS que este servidor tem menos um cliente
+                    }
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+
+            }
+            if (exit) {
+                try {
+                    if (oos != null)
+                        oos.close();
+                    if (ois != null)
+                        ois.close();
+                    if (sCli != null)
+                        sCli.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            break;
+        }
+    }
+}
+
+

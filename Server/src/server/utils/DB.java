@@ -15,14 +15,58 @@ public class DB {
         dbConn = DriverManager.getConnection(DATABASE_URL, USERNAME, PASSWORD);
     }
 
-    public void close() throws SQLException
-    {
+    public void close() throws SQLException {
         if (dbConn != null)
             dbConn.close();
     }
 
-    public ArrayList<String> listUsers(String whereName) throws SQLException
-    {
+    public boolean registUser(String username, String name, String password) throws SQLException {
+        Statement statement = dbConn.createStatement();
+
+        java.sql.Timestamp date = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
+        String sqlQueryExist = "SELECT username FROM Utilizador WHERE username like '" + username + "'";
+
+        ResultSet resultSet = statement.executeQuery(sqlQueryExist);
+        boolean aux = resultSet.next();
+        statement.close();
+        if(aux){
+            String sqlQueryRegist = "INSERT INTO Utilizador VALUES ('"+ username.toLowerCase() +"','"+ name +"','"+password+"','ONLINE','"+date+"')";
+            statement.executeUpdate(sqlQueryRegist);
+            statement.close();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean loginUser(String username, String password) throws SQLException{
+        Statement statement = dbConn.createStatement();
+
+        java.sql.Timestamp date = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
+
+
+        String sqlQuery = "SELECT username FROM Utilizador WHERE password like '"+ password + "' AND username like '" + username + "'";
+
+        ResultSet resultSet = statement.executeQuery(sqlQuery);
+        boolean aux = resultSet.next();
+        if (aux)
+            updateState(username,true);
+        statement.close();
+        return aux;
+    }
+
+    public void updateState(String username, boolean isOnline) throws SQLException {
+        Statement statement = dbConn.createStatement();
+
+        java.sql.Timestamp date = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
+
+        String state = isOnline ? "online" : "offline";
+        String sqlQuery = "UPDATE Utilizador SET estado='" + state + "',ultima_vez_online='" + date + "' WHERE username='"+username+"'";
+
+        statement.executeUpdate(sqlQuery);
+        statement.close();
+    }
+
+    public ArrayList<String> listUsers(String whereName) throws SQLException {
         Statement statement = dbConn.createStatement();
         ArrayList<String> users = new ArrayList<>();
 
@@ -32,14 +76,13 @@ public class DB {
 
         ResultSet resultSet = statement.executeQuery(sqlQuery);
 
-        while(resultSet.next())
-        {
+        while (resultSet.next()) {
             String username = resultSet.getString("username");
             String name = resultSet.getString("nome");
             String status = resultSet.getString("estado");
             Date lastTimeOnline = resultSet.getDate("ultima_vez_online");
 
-            users.add("["+username+"] - " + name + " - Status: " + status + " - Last Time Online: " + lastTimeOnline);
+            users.add("[" + username + "] - " + name + " - Status: " + status + " - Last Time Online: " + lastTimeOnline);
         }
 
         resultSet.close();
@@ -47,15 +90,8 @@ public class DB {
         return users;
     }
 
-//    public void insertUser(String name, String birthdate) throws SQLException
-//    {
-//        Statement statement = dbConn.createStatement();
-//
-//        String sqlQuery = "INSERT INTO users VALUES (0,'" + name + "','" + birthdate + "')";
-//        statement.executeUpdate(sqlQuery);
-//        statement.close();
-//    }
-//
+
+
 //    public void updateUser(int id, String name, String birthdate) throws SQLException
 //    {
 //        Statement statement = dbConn.createStatement();

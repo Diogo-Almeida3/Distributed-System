@@ -1,4 +1,4 @@
-package client.utils;
+package client.UI.Text;
 
 import java.util.Scanner;
 
