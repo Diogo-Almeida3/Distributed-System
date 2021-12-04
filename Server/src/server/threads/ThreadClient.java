@@ -17,7 +17,7 @@ public class ThreadClient extends Thread {
     private Socket sCli;
     private DB db;
 
-    private String username = null;
+    private String cliUsername = null;
 
     public ThreadClient(Socket sCli, DB db) {
         this.sCli = sCli;
@@ -43,31 +43,20 @@ public class ThreadClient extends Thread {
         }
 
         while (!exit) {
-
             try {
                 //todo quando acontece um update na db o sv tem de conseguir avisar todos os outros desse update
-                try {
-                    cliMessage = (Cli2Serv) ois.readObject();
-                } catch (SocketException e) { // TODO: Mudar estado do utilizador para offline quando se perde a conexão
-                    try {
-                        db.updateState(username, false);
-                        System.out.println("User: " + username + " left...");
-                    } catch (SQLException exception) {
-                        System.err.println("Error while login...");
-                    }
-                    exit = true;
-                    break;
-                }
+
+                cliMessage = (Cli2Serv) ois.readObject();
 
                 switch (cliMessage.getRequestType()) {
                     case REGISTER -> {
                         Cli2ServReg regData = (Cli2ServReg) cliMessage;
-                        username = regData.getUsername();
+                        cliUsername = regData.getUsername();
                         try {
                             if (db.registUser(regData.getUsername(), regData.getName(), regData.getPassword())) {
-                                db.updateState(username, true);
+                                db.updateState(cliUsername, true);
                                 oos.writeObject(true);
-                                System.out.println("User: " + username + "registed successfully");
+                                System.out.println("User: " + cliUsername + "registed successfully");
                             } else {
                                 oos.writeObject(false);
                                 System.out.println("User failed regist...");
@@ -80,12 +69,12 @@ public class ThreadClient extends Thread {
                     }
                     case LOGIN -> {
                         Cli2ServLog logData = (Cli2ServLog) cliMessage;
-                        username = logData.getUsername();
+                        cliUsername = logData.getUsername();
                         try {
-                            if (db.loginUser(username, logData.getPassword())) {
-                                db.updateState(username, true);
+                            if (db.loginUser(cliUsername, logData.getPassword())) {
+                                db.updateState(cliUsername, true);
                                 oos.writeObject(true);
-                                System.out.println("User: " + username + " logged successfully");
+                                System.out.println("User: " + cliUsername + " logged successfully");
                             } else {
                                 oos.writeObject(false);
                                 System.out.println("User failed login...");
@@ -147,33 +136,45 @@ public class ThreadClient extends Thread {
                     case EXIT -> {
                         Cli2ServExit cli2ServExit = (Cli2ServExit) cliMessage;
                         try {
-                            sCli.close();
-                            db.updateState(cli2ServExit.getUsername(), false);
+                            exit = true;
+                            db.updateState(cli2ServExit.getUsername(), false); //TODO: Verificar se é aqui que ele mudar o username
                             System.out.println("User: " + cli2ServExit.getUsername() + " left...");
+                            oos.writeObject(true); /* Informa ao cliente que o vai mandar com o caralho */
                         } catch (SQLException e) {
                             System.err.println("Error while login...");
                         }
                         // TODO: Informar GRDS que este servidor tem menos um cliente
                     }
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-
             }
-            if (exit) {
-                try {
-                    if (oos != null)
-                        oos.close();
-                    if (ois != null)
-                        ois.close();
-                    if (sCli != null)
-                        sCli.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+            catch (SocketException e) {
+                if (!exit) {
+                    try {
+                        db.updateState(cliUsername, false);
+                        System.out.println("User: " + cliUsername + " has lost connection...");
+                    } catch (SQLException exception) {
+                        System.err.println("Error while login...");
+                    }
+                    setExit(true);
+                    break;
                 }
             }
-            break;
+            catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
+
+        try {
+            if (oos != null)
+                oos.close();
+            if (ois != null)
+                ois.close();
+            if (sCli != null)
+                sCli.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }
 

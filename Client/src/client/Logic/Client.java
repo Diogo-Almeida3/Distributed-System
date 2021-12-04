@@ -139,7 +139,8 @@ public class Client {
     public void exitServer() {
         try {
             out2serv.writeObject(new Cli2ServExit(username));
-        } catch (IOException e) {
+            inServ.readObject(); // Wait for response of server to close client
+        } catch (IOException | ClassNotFoundException e) {
            e.getMessage();
         }
     }

@@ -1,5 +1,7 @@
 package server.utils;
 
+import data.cli2serv.Cli2ServChgProf;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -36,6 +38,46 @@ public class DB {
             return true;
         }
         return false;
+    }
+
+    public boolean editUsername(String newUsername, String username) {
+        Statement statement = null;
+        try {
+            statement = dbConn.createStatement();
+            String sqlQueryExist = "UPDATE Utilizador SET username = '"+newUsername+"' WHERE username like '" + username + "'";
+            statement.executeQuery(sqlQueryExist);
+        } catch (SQLException e) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean editName(String newName, String username) throws SQLException {
+        Statement statement = null;
+        try {
+            statement = dbConn.createStatement();
+            String sqlQueryExist = "UPDATE Utilizador SET nome = '"+newName+"' WHERE username like '" + username + "'";
+            statement.executeQuery(sqlQueryExist);
+        } catch (SQLException e) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean editPassword(String newPassword,String oldPassword, String username) throws SQLException {
+        Statement statement = null;
+        try {
+            statement = dbConn.createStatement();
+
+            if (loginUser(username,oldPassword)) {
+                String sqlQueryExist = "UPDATE Utilizador SET password = '"+newPassword+"' WHERE username like '" + username + "'";
+                ResultSet resultSet = statement.executeQuery(sqlQueryExist);
+            } else return false;
+
+        } catch (SQLException e) {
+            return false;
+        }
+        return true;
     }
 
     public boolean loginUser(String username, String password) throws SQLException{
