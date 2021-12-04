@@ -14,10 +14,13 @@ public class Client {
     private int grdsPort;
     private String grdsIp;
     private DatagramSocket ds;
-    Socket sCli = null;
-    ObjectOutputStream out2serv = null;
-    ObjectInputStream inServ = null;
+    private Socket sCli = null;
+    private ObjectOutputStream out2serv = null;
+    private ObjectInputStream inServ = null;
     private String username = null;
+
+    private boolean isLogged = false;
+
 
     public String getUsername() {
         return username;
@@ -77,31 +80,31 @@ public class Client {
 
     public boolean login(String username, String password) {
         Cli2ServLog log = new Cli2ServLog(username, password);
-        boolean success = false;
         try {
             out2serv.writeObject(log);
-            success = (boolean) inServ.readObject();
-            if (success) this.username = username;
+            isLogged = (boolean) inServ.readObject();
+            if (isLogged) this.username = username;
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Login Error in communication with server!");
         }
-        return success;
+        return isLogged;
     }
 
     public boolean register(String username, String name, String password) {
         Cli2ServReg reg = new Cli2ServReg(username, name, password);
-        boolean success = false;
         try {
             out2serv.writeObject(reg);
-            success = (boolean) inServ.readObject();
-            if (success) this.username = username;
+            isLogged = (boolean) inServ.readObject();
+            if (isLogged) this.username = username;
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error Register in communication with server!");
         }
-        return success;
+        return isLogged;
     }
 
     public boolean editProfileName(String newName){
+        if (!isLogged) return false;
+
         Cli2ServChgProf prof = new Cli2ServChgProf(username,newName, Cli2ServChgProf.typeEdit.EDIT_NAME);
         boolean success = false;
         try{
@@ -113,6 +116,8 @@ public class Client {
         return success;
     }
     public boolean editProfileUsername(String newUsername){
+        if (!isLogged) return false;
+
         Cli2ServChgProf prof = new Cli2ServChgProf(username,newUsername,Cli2ServChgProf.typeEdit.EDIT_USERNAME);
         boolean success = false;
         try{
@@ -125,6 +130,8 @@ public class Client {
     }
 
     public boolean editProfilePass(String password,String newPassword){
+        if (!isLogged) return false;
+
         Cli2ServChgProf prof = new Cli2ServChgProf(username,password,newPassword,Cli2ServChgProf.typeEdit.EDIT_USERNAME);
         boolean success = false;
         try{
