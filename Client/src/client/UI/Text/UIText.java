@@ -27,7 +27,7 @@ public class UIText {
                     "Pending contact requests","Add Contact",
                     "Delete Contact","Create Group","Exit")){
                 case 0 -> {
-                    logic.exitServer();//todo debug no cliente
+                    logic.exitServer();
                     exit = true;
                 }
                 case 1 ->

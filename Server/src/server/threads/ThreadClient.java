@@ -1,9 +1,6 @@
 package server.threads;
 
-import data.cli2serv.Cli2Serv;
-import data.cli2serv.Cli2ServExit;
-import data.cli2serv.Cli2ServLog;
-import data.cli2serv.Cli2ServReg;
+import data.cli2serv.*;
 import server.utils.DB;
 
 import java.io.IOException;
@@ -78,7 +75,7 @@ public class ThreadClient extends Thread {
                         } catch (SQLException e) {
                             System.err.println("Error while registering a new user...");
                         } catch (SocketException e) {
-                            exit = true;
+                            setExit(true);
                         }
                     }
                     case LOGIN -> {
@@ -96,14 +93,36 @@ public class ThreadClient extends Thread {
                         } catch (SQLException e) {
                             System.err.println("Error while login...");
                         } catch (SocketException e) {
-                            exit = true;
+                            setExit(true);
+                        }
+                    }
+                    case EDIT_USER -> {
+                        Cli2ServChgProf profData = (Cli2ServChgProf) cliMessage;
+                        boolean checkNull=false ;
+                        try {
+                            if (profData.getNewPassword() != null)
+                                checkNull = db.editPassword(profData.getNewPassword(), profData.getOldPassword(), profData.getOldUsername());
+                            else if (profData.getNewName() != null)
+                                checkNull = db.editName(profData.getNewName(), profData.getOldUsername());
+                            else if (profData.getNewUsername() != null)
+                                checkNull = db.editUsername(profData.getNewUsername(), profData.getOldUsername());
+                            if(checkNull){
+                                oos.writeObject(true);
+                                System.out.println("Edit successfully...");
+                            } else{
+                                oos.writeObject(false);
+                                System.out.println("Edit failed...");
+                            }
+
+                        } catch (SQLException e) {
+                            System.err.println("Error while editing...");
+                        } catch (SocketException e) {
+                            setExit(true);
                         }
                     }
                     case SEARCH_USER -> {
                     }
                     case LIST_USERS -> {
-                    }
-                    case EDIT_USER -> {
                     }
                     case ADD_CONTACT -> {
                     }
@@ -134,7 +153,6 @@ public class ThreadClient extends Thread {
                         } catch (SQLException e) {
                             System.err.println("Error while login...");
                         }
-                        exit = true;
                         // TODO: Informar GRDS que este servidor tem menos um cliente
                     }
                 }
