@@ -23,7 +23,7 @@ public class UIText {
     public void run(){
         menuLoginReg();
         while(!exit){
-            switch ( Utils.askOption("User Profile", "Send Messages", "Contact List",
+            switch ( Utils.askOption("Edit Profile", "Send Messages", "Contact List",
                     "Pending contact requests","Add Contact",
                     "Delete Contact","Create Group","Exit")){
                 case 0 -> {
@@ -74,11 +74,25 @@ public class UIText {
         }
     }
 
-    private void sendMessages(){
+    private void userProfile(){
+        switch (Utils.askOption("Edit Name","Edit Username","Edit password","Go Back")){
+            case 0->{}
 
+            case 1->{
+                    logic.editProfileName("Enter a new name");
+            }
+            case 2->{
+                    logic.editProfileUsername("Enter a new Username");
+
+            }
+            case 3->{
+                logic.editProfilePass("Enter a old password ","Enter a new password");
+            }
+
+        }
     }
 
-    private void userProfile(){
+    private void sendMessages(){
 
     }
 

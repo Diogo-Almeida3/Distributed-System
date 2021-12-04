@@ -1,6 +1,7 @@
 package client.Logic;
 
 import data.Cli2Grds;
+import data.cli2serv.Cli2ServChgProf;
 import data.cli2serv.Cli2ServExit;
 import data.cli2serv.Cli2ServLog;
 import data.cli2serv.Cli2ServReg;
@@ -96,6 +97,41 @@ public class Client {
             if (success) this.username = username;
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error Register in communication with server!");
+        }
+        return success;
+    }
+
+    public boolean editProfileName(String newName){
+        Cli2ServChgProf prof = new Cli2ServChgProf(username,newName, Cli2ServChgProf.typeEdit.EDIT_NAME);
+        boolean success = false;
+        try{
+            out2serv.writeObject(prof);
+            success = (boolean) inServ.readObject();
+        }catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error editing name in profile in communication with server!");
+        }
+        return success;
+    }
+    public boolean editProfileUsername(String newUsername){
+        Cli2ServChgProf prof = new Cli2ServChgProf(username,newUsername,Cli2ServChgProf.typeEdit.EDIT_USERNAME);
+        boolean success = false;
+        try{
+            out2serv.writeObject(prof);
+            success = (boolean) inServ.readObject();
+        }catch (IOException | ClassNotFoundException e){
+            System.err.println("Error editing username in profile in communication with server");
+        }
+        return success;
+    }
+
+    public boolean editProfilePass(String password,String newPassword){
+        Cli2ServChgProf prof = new Cli2ServChgProf(username,password,newPassword,Cli2ServChgProf.typeEdit.EDIT_USERNAME);
+        boolean success = false;
+        try{
+            out2serv.writeObject(prof);
+            success = (boolean) inServ.readObject();
+        }catch (IOException | ClassNotFoundException e){
+            System.err.println("Error editing password in profile in communication with server");
         }
         return success;
     }
