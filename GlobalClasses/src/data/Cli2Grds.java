@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.net.InetAddress;
 
 public class Cli2Grds implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private InetAddress servIp = null;
     private int portIp = 0;
 

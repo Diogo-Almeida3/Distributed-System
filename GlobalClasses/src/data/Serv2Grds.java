@@ -5,6 +5,7 @@ import java.net.InetAddress;
 
 
 public class Serv2Grds implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private Request request = null;

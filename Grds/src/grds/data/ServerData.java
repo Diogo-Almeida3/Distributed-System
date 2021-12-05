@@ -5,6 +5,20 @@ import java.net.InetSocketAddress;
 
 public class ServerData extends InetSocketAddress {
     private int numClientsAtri = 0;
+    private Integer numTimeouts = 0;
+    private ThreadServData threadTimeout;
+
+    public ServerData(InetAddress addr, int port) {
+        super(addr, port);
+        threadTimeout = new ThreadServData(numTimeouts);
+        threadTimeout.start();
+    }
+
+    public boolean isTimeout() { return threadTimeout.isTimeout(); }
+
+    public int getNumTimeouts() {
+        return numTimeouts;
+    }
 
     public void newClient() {numClientsAtri++;}
 
@@ -14,11 +28,17 @@ public class ServerData extends InetSocketAddress {
         numClientsAtri--;
     }
 
-    public int getNumCli() {
-        return numClientsAtri;
+    public void pinged() {
+        threadTimeout.interrupt();
+        synchronized (numTimeouts) { numTimeouts = 0;}
     }
 
-    public ServerData(InetAddress addr, int port) {
-        super(addr, port);
+    public void stop() {
+        threadTimeout.setExit(true);
+        threadTimeout.interrupt();
+    }
+
+    public int getNumCli() {
+        return numClientsAtri;
     }
 }

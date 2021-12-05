@@ -3,6 +3,7 @@ package data.cli2serv;
 import java.io.Serializable;
 
 public abstract class Cli2Serv implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private RequestType requestType;
 

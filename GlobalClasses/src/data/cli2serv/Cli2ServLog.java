@@ -1,6 +1,7 @@
 package data.cli2serv;
 
 public class Cli2ServLog extends Cli2Serv {
+    private static final long serialVersionUID = 1L;
     private String username,password;
 
     public String getUsername() {
