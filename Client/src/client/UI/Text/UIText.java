@@ -11,14 +11,7 @@ public class UIText {
     private boolean exit = false;
 
     public UIText(Client logic) {
-
         this.logic = logic;
-        try {
-            logic.inicialComsSend();
-            logic.inicialComsReceived();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void run(){

@@ -140,14 +140,15 @@ public class ThreadClient extends Thread {
                     }
                     case EXIT -> {
                         Cli2ServExit cli2ServExit = (Cli2ServExit) cliMessage;
-                        try {
+//                        try {
                             exit = true;
-                            db.updateState(cli2ServExit.getUsername(), false); //TODO: Verificar se é aqui que ele mudar o username
+//                            db.updateState(cli2ServExit.getUsername(), false); //TODO: Verificar se é aqui que ele mudar o username
                             System.out.println("User: " + cli2ServExit.getUsername() + " left...");
-                            oos.writeObject(true); /* Informa ao cliente que o vai mandar com o caralho */
-                        } catch (SQLException e) {
-                            System.err.println("Error while login...");
-                        }
+//                            oos.writeObject(true);
+//                            break;
+//                        } catch (SQLException e) {
+//                            System.err.println("Error while login...");
+//                        }
                         // TODO: Informar GRDS que este servidor tem menos um cliente
                     }
                 }
@@ -156,7 +157,7 @@ public class ThreadClient extends Thread {
                 if (!exit) {
                     try {
                         db.updateState(cliUsername, false);
-                        System.out.println("User: " + cliUsername + " has lost connection...");
+                        System.out.println("User: " + cliUsername + " asdas ddebug teste  7-12has lost connection...");
                     } catch (SQLException exception) {
                         System.err.println("Error while login...");
                     }

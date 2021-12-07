@@ -5,6 +5,7 @@ public class ThreadServData extends Thread {
     private int numTimeouts = 0;
     private boolean timeout = false;
 
+    //TODO: Reset numTimeouts
 
     public boolean isTimeout() {
         return timeout;
