@@ -2,12 +2,9 @@ package grds.data;
 
 public class ThreadServData extends Thread {
     private boolean exit = false;
-    private Integer numTimeouts;
+    private int numTimeouts = 0;
     private boolean timeout = false;
 
-    public ThreadServData(Integer numTimeouts) {
-        this.numTimeouts = numTimeouts;
-    }
 
     public boolean isTimeout() {
         return timeout;
@@ -22,12 +19,16 @@ public class ThreadServData extends Thread {
         while (!exit) {
             try {
                 Thread.sleep(20 * 1000);
-            } catch (InterruptedException e) {}
-            synchronized (numTimeouts) {numTimeouts++;}
+                numTimeouts++;
+            } catch (InterruptedException e) { numTimeouts = 0; }
             if (numTimeouts >= 3) {
                 timeout = true;
                 break;
             }
         }
+    }
+
+    public int getNumTimeouts() {
+        return numTimeouts;
     }
 }

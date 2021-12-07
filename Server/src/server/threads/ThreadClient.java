@@ -89,12 +89,17 @@ public class ThreadClient extends Thread {
                         Cli2ServChgProf profData = (Cli2ServChgProf) cliMessage;
                         boolean checkNull=false ;
                         try {
-                            if (profData.getNewPassword() != null)
-                                checkNull = db.editPassword(profData.getNewPassword(), profData.getOldPassword(), profData.getOldUsername());
-                            else if (profData.getNewName() != null)
-                                checkNull = db.editName(profData.getNewName(), profData.getOldUsername());
-                            else if (profData.getNewUsername() != null)
-                                checkNull = db.editUsername(profData.getNewUsername(), profData.getOldUsername());
+                            switch (profData.getEditReq()) {
+                                case EDIT_NAME -> {
+                                    checkNull = db.editName(profData.getNewName(), profData.getOldUsername());
+                                }
+                                case EDIT_PASSWORD -> {
+                                    checkNull = db.editPassword(profData.getNewPassword(), profData.getOldPassword(), profData.getOldUsername());
+                                }
+                                case EDIT_USERNAME -> {
+                                    checkNull = db.editUsername(profData.getNewUsername(), profData.getOldUsername(), profData.getOldPassword());
+                                }
+                            }
                             if(checkNull){
                                 oos.writeObject(true);
                                 System.out.println("Edit successfully...");

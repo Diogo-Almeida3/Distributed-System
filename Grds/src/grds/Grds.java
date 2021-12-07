@@ -3,6 +3,7 @@ package grds;
 import data.Cli2Grds;
 import data.Serv2Grds;
 import grds.data.ServerData;
+import grds.threads.ThreadCheckServs;
 import grds.threads.ThreadMulticast;
 
 import javax.naming.OperationNotSupportedException;
@@ -56,6 +57,8 @@ public class Grds {
         threadReceivedServers.start();
         ThreadMulticast threadMulticast = new ThreadMulticast(myport);
         threadMulticast.start();
+        ThreadCheckServs threadCheckServs = new ThreadCheckServs(servers);
+        threadCheckServs.start();
         System.out.println("============================== GRDS Ready ==============================");
         try {
             synchronized (threadReceivedServers) {
@@ -63,6 +66,9 @@ public class Grds {
             }
             synchronized (threadMulticast) {
                 threadMulticast.wait();
+            }
+            synchronized (threadCheckServs) {
+                threadCheckServs.wait();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -96,14 +102,27 @@ public class Grds {
 
                         switch (data.getRequest()) {
                             case REGISTER -> {
+                                ServerData serv = new ServerData(datagramPacket.getAddress(), data.getPort());
                                 synchronized (servers) {
-                                    servers.add(new ServerData(datagramPacket.getAddress(), data.getPort())); // Add server to list of active servers
+                                    servers.add(serv); // Add server to list of active servers
                                 }
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+                                oos.writeObject(serv.getIdentifier());
+
+                                datagramPacket.setData(baos.toByteArray());
+                                datagramPacket.setLength(baos.size());
+                                datagramSocket.send(datagramPacket);
+
                                 System.out.println("New Server Registered! --> " + datagramPacket.getAddress().getHostAddress() + ":" + data.getPort());
                             }
                             case PING -> {
-                                System.out.println("Ping! --> " + datagramPacket.getAddress().getHostAddress());
-
+                                System.out.println("Ping server "+data.getId()+"! --> " + datagramPacket.getAddress().getHostAddress());
+                                for (ServerData serv : servers) {
+                                    if (serv.getIdentifier() == data.getId())
+                                        serv.pinged();
+                                }
                             }
                             default -> System.err.println("Request of server "+datagramPacket.getAddress().getHostAddress()+"is not possible");
                         }

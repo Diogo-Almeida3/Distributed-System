@@ -105,7 +105,7 @@ public class Client {
     public boolean editProfileName(String newName){
         if (!isLogged) return false;
 
-        Cli2ServChgProf prof = new Cli2ServChgProf(username,newName, Cli2ServChgProf.typeEdit.EDIT_NAME);
+        Cli2ServChgProf prof = new Cli2ServChgProf(newName,username, Cli2ServChgProf.typeEdit.EDIT_NAME);
         boolean success = false;
         try{
             out2serv.writeObject(prof);
@@ -115,14 +115,16 @@ public class Client {
         }
         return success;
     }
-    public boolean editProfileUsername(String newUsername){
+    public boolean editProfileUsername(String newUsername,String password){
         if (!isLogged) return false;
 
-        Cli2ServChgProf prof = new Cli2ServChgProf(username,newUsername,Cli2ServChgProf.typeEdit.EDIT_USERNAME);
+        Cli2ServChgProf prof = new Cli2ServChgProf(username,newUsername,password,Cli2ServChgProf.typeEdit.EDIT_USERNAME);
         boolean success = false;
         try{
             out2serv.writeObject(prof);
             success = (boolean) inServ.readObject();
+            if (success)
+                username = newUsername;
         }catch (IOException | ClassNotFoundException e){
             System.err.println("Error editing username in profile in communication with server");
         }
@@ -132,7 +134,7 @@ public class Client {
     public boolean editProfilePass(String password,String newPassword){
         if (!isLogged) return false;
 
-        Cli2ServChgProf prof = new Cli2ServChgProf(username,password,newPassword,Cli2ServChgProf.typeEdit.EDIT_USERNAME);
+        Cli2ServChgProf prof = new Cli2ServChgProf(username,newPassword,password,Cli2ServChgProf.typeEdit.EDIT_PASSWORD);
         boolean success = false;
         try{
             out2serv.writeObject(prof);

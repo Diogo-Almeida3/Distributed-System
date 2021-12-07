@@ -23,29 +23,33 @@ public class DB {
     }
 
     public boolean registUser(String username, String name, String password) throws SQLException {
+        boolean success = false;
         Statement statement = dbConn.createStatement();
 
         java.sql.Timestamp date = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
-        String sqlQueryExist = "SELECT username FROM Utilizador WHERE username like '" + username + "'";
+        String sqlQueryRegist = "INSERT INTO Utilizador VALUES ('"+ username.toLowerCase() +"','"+ name +"','"+password+"','ONLINE','"+date+"')";
 
-        ResultSet resultSet = statement.executeQuery(sqlQueryExist);
-        boolean aux = resultSet.next();
-        statement.close();
-        if(aux){
-            String sqlQueryRegist = "INSERT INTO Utilizador VALUES ('"+ username.toLowerCase() +"','"+ name +"','"+password+"','ONLINE','"+date+"')";
+        try {
             statement.executeUpdate(sqlQueryRegist);
-            statement.close();
-            return true;
+            success = true;
+        } catch (SQLException e) {
+            success = false;
         }
-        return false;
+
+        statement.close();
+        return success;
     }
 
-    public boolean editUsername(String newUsername, String username) {
+    public boolean editUsername(String newUsername, String username, String password) {
         Statement statement = null;
         try {
-            statement = dbConn.createStatement();
-            String sqlQueryExist = "UPDATE Utilizador SET username = '"+newUsername+"' WHERE username like '" + username + "'";
-            statement.executeQuery(sqlQueryExist);
+            if (loginUser(username,password)) {
+                statement = dbConn.createStatement();
+                String sqlQueryExist = "UPDATE Utilizador SET username = '" + newUsername.toLowerCase() + "' WHERE username like '" + username.toLowerCase() + "'";
+                statement.executeUpdate(sqlQueryExist);
+            }
+            else
+                return false;
         } catch (SQLException e) {
             return false;
         }
@@ -57,7 +61,7 @@ public class DB {
         try {
             statement = dbConn.createStatement();
             String sqlQueryExist = "UPDATE Utilizador SET nome = '"+newName+"' WHERE username like '" + username + "'";
-            statement.executeQuery(sqlQueryExist);
+            statement.executeUpdate(sqlQueryExist);
         } catch (SQLException e) {
             return false;
         }
@@ -71,7 +75,7 @@ public class DB {
 
             if (loginUser(username,oldPassword)) {
                 String sqlQueryExist = "UPDATE Utilizador SET password = '"+newPassword+"' WHERE username like '" + username + "'";
-                ResultSet resultSet = statement.executeQuery(sqlQueryExist);
+                statement.executeUpdate(sqlQueryExist);
             } else return false;
 
         } catch (SQLException e) {

@@ -4,20 +4,26 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 public class ServerData extends InetSocketAddress {
+    private static int identifierCount = 0;
+
+    private int identifier = identifierCount++;
     private int numClientsAtri = 0;
-    private Integer numTimeouts = 0;
     private ThreadServData threadTimeout;
 
     public ServerData(InetAddress addr, int port) {
         super(addr, port);
-        threadTimeout = new ThreadServData(numTimeouts);
+        threadTimeout = new ThreadServData();
         threadTimeout.start();
+    }
+
+    public int getIdentifier() {
+        return identifier;
     }
 
     public boolean isTimeout() { return threadTimeout.isTimeout(); }
 
     public int getNumTimeouts() {
-        return numTimeouts;
+        return threadTimeout.getNumTimeouts();
     }
 
     public void newClient() {numClientsAtri++;}
@@ -29,8 +35,8 @@ public class ServerData extends InetSocketAddress {
     }
 
     public void pinged() {
+        System.err.println("Server " + identifier + " has pinged");
         threadTimeout.interrupt();
-        synchronized (numTimeouts) { numTimeouts = 0;}
     }
 
     public void stop() {

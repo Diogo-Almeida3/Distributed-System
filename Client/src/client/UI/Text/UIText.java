@@ -1,6 +1,7 @@
 package client.UI.Text;
 
 import client.Logic.Client;
+import jdk.jshell.execution.Util;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -63,7 +64,7 @@ public class UIText {
                         System.out.println("Login with success!");
                     else {
                         System.out.println("Username or password entered is invalid!");
-                        if (++attempts > 3) {
+                        if (++attempts >= 3) {
                             exit = true;
                             break;
                         }
@@ -76,17 +77,29 @@ public class UIText {
 
     private void userProfile(){
         switch (Utils.askOption("Edit Name","Edit Username","Edit password","Go Back")){
-            case 0->{}
+            case 0->{
+
+            }
 
             case 1->{
-                    logic.editProfileName("Enter a new name");
+                    if(logic.editProfileName(Utils.askString("Enter a new name: ")))
+                        System.out.println("Success editing profile name");
+                    else
+                        System.out.println("Failed editing profile name");
+
             }
             case 2->{
-                    logic.editProfileUsername("Enter a new Username");
+                    if(logic.editProfileUsername(Utils.askString("Enter a new Username: "),Utils.askString("Enter your password: ")))
+                        System.out.println("Success editing profile username");
+                    else
+                        System.out.println("Failed editing profile username");
 
             }
             case 3->{
-                logic.editProfilePass("Enter a old password ","Enter a new password");
+                if(logic.editProfilePass(Utils.askString("Enter a old password: "),Utils.askString("Enter a new password: ")))
+                    System.out.println("Success editing profile password");
+                else
+                    System.out.println("Failed editing profile password");
             }
 
         }

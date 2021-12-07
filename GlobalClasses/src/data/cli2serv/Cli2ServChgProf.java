@@ -12,22 +12,24 @@ public class Cli2ServChgProf extends Cli2Serv {
     private String oldPassword = null;
 
 
-    // Constructor to change Name or Username
+    // Constructor to change Name
     public Cli2ServChgProf(String newName, String oldUsername,typeEdit editReq) {
         super(RequestType.EDIT_USER);
-        if (editReq == typeEdit.EDIT_NAME)
-            this.newName = newName;
-        else
-            this.newUsername = newName;
+        this.newName = newName;
         this.oldUsername = oldUsername;
         this.editReq = editReq;
     }
 
-    // Constructor to change Password
+    // Constructor to change Password or username
     public Cli2ServChgProf(String oldUsername, String newPassword, String oldPassword,typeEdit editReq) {
         super(RequestType.EDIT_USER);
+
+        if (editReq == typeEdit.EDIT_USERNAME)
+            this.newUsername = newPassword;
+        else
+            this.newPassword = newPassword;
+
         this.oldUsername = oldUsername;
-        this.newPassword = newPassword;
         this.oldPassword = oldPassword;
         this.editReq = editReq;
     }
