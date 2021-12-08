@@ -128,6 +128,10 @@ public class ThreadClient extends Thread {
                         }
                     }
                     case SEARCH_USER -> {
+                        Cli2ServSearch search = (Cli2ServSearch) cliMessage;
+                        ArrayList<String> info = db.searchUser(search.getUsername());
+                        oos.writeObject(info);
+
                     }
                     case ADD_CONTACT -> {
                     }

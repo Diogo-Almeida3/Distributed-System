@@ -17,7 +17,7 @@ public class UIText {
     public void run(){
         menuLoginReg();
         while(!exit){
-            switch ( Utils.askOption("Edit Profile", "Send Messages", "Contact List",
+            switch ( Utils.askOption("Edit Profile", "Send Messages", "Contact List","Search user",
                     "Pending contact requests","Add Contact",
                     "Delete Contact","Create Group","Exit")){
                 case 0 -> {
@@ -30,13 +30,15 @@ public class UIText {
                         sendMessages();
                 case 3 ->
                         contactList();
-                case 4 ->
-                        pendingContactRequest();
+                case 4->
+                        searchUser();
                 case 5 ->
-                        addContact();
+                        pendingContactRequest();
                 case 6 ->
-                        deleteContact();
+                        addContact();
                 case 7 ->
+                        deleteContact();
+                case 8 ->
                         createGroup();
             }
         }
@@ -106,10 +108,19 @@ public class UIText {
 
     private void sendMessages(){
 
+
     }
 
     private void contactList(){
 
+    }
+
+    private void searchUser(){
+        String userInfo = logic.searchUser(Utils.askString("Enter a name or username: "));
+        if(userInfo != null)
+            System.out.println(userInfo);
+        else
+            System.out.println("User not Found.");
     }
 
     private void pendingContactRequest(){
