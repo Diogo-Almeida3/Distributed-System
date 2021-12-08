@@ -1,7 +1,5 @@
 package server.utils;
 
-import data.cli2serv.Cli2ServChgProf;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -112,13 +110,19 @@ public class DB {
         statement.close();
     }
 
-    public ArrayList<String> listUsers(String whereName) throws SQLException {
+    public ArrayList<String> listContacts(String reqUsername) throws SQLException {
         Statement statement = dbConn.createStatement();
         ArrayList<String> users = new ArrayList<>();
 
+        /*
+        * Vai à tabela de contactos -> Utilizador_has_Utilizador
+        * Utilizador_username -> Quem está a tentar listar (reqUsername)
+        * Utilizador_username1 -> é o que queremos
+        * isPendenteContacto -> Tem de ser falso pois assim significa que o utilizador já está na lista de contactos
+        */
         String sqlQuery = "SELECT username, nome, estado, ultima_vez_online FROM Utilizador";
-        if (whereName != null)
-            sqlQuery += " WHERE nome like '%" + whereName + "%'";
+        if (reqUsername != null)
+            sqlQuery += " WHERE nome like '%" + reqUsername + "%'";
 
         ResultSet resultSet = statement.executeQuery(sqlQuery);
 

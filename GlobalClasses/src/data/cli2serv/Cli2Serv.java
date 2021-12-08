@@ -16,7 +16,7 @@ public abstract class Cli2Serv implements Serializable {
     }
 
     public enum RequestType{
-        REGISTER, LOGIN, SEARCH_USER, LIST_USERS, EDIT_USER,
+        REGISTER, LOGIN, SEARCH_USER, EDIT_USER,
         ADD_CONTACT, LIST_CONTACT, DELETE_CONTACT,
         CREATE_GROUP, JOIN_GROUP, LIST_GROUPS,EDIT_GROUP,LEAVE_GROUP,
         CONTACT_REQUEST,SEND_MESSAGE,EXIT

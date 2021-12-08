@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 public class ThreadClient extends Thread {
@@ -128,11 +129,12 @@ public class ThreadClient extends Thread {
                     }
                     case SEARCH_USER -> {
                     }
-                    case LIST_USERS -> {
-                    }
                     case ADD_CONTACT -> {
                     }
                     case LIST_CONTACT -> {
+                        Cli2ServListContacts listContacts = (Cli2ServListContacts) cliMessage;
+                        db.listContacts(listContacts.getUsername());
+                        //Todo Resolver o que pode ser feito
                     }
                     case DELETE_CONTACT -> {
                     }
@@ -167,6 +169,9 @@ public class ThreadClient extends Thread {
                 lastTimeOn = Calendar.getInstance().getTimeInMillis();
                 if (cliMessage.getRequestType() != Cli2Serv.RequestType.EXIT)
                     db.updateState(cliUsername,true);
+
+                /* Enviar via udp ao grds a dizer que houve alterações */
+
             }
             catch (SocketException e) {
                 if (!exit) {
