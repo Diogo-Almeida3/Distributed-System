@@ -8,6 +8,7 @@ import data.cli2serv.Cli2ServReg;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 
 public class Client {
 
@@ -19,6 +20,7 @@ public class Client {
     private ObjectInputStream inServ = null;
     private String username = null;
 
+    private boolean noServer = false;
     private boolean isLogged = false;
 
 
@@ -29,11 +31,19 @@ public class Client {
     public Client(String args[]) throws IOException {
         this.grdsIp = args[0];
         this.grdsPort = Integer.parseInt(args[1]);
+        getComs();
+    }
+
+    public boolean getNoServer() {
+        return noServer;
+    }
+
+    private void getComs() throws IOException {
         ds = new DatagramSocket();
         inicialComsSend();
         inicialComsReceived();
-    }
 
+    }
 
     public void inicialComsSend() throws IOException {
 
@@ -58,8 +68,9 @@ public class Client {
         ds.receive(dpReceived);
 
         if (dpReceived.getLength() == 0) {
-            System.err.println("No servers available...");
+            System.err.println("No servers available. Try again later...");
             ds.close();
+            noServer = true;
             return;
         }
 
@@ -69,7 +80,7 @@ public class Client {
         Cli2Grds infoServ = null;
         try {
             infoServ = (Cli2Grds) ois.readObject();
-            sCli = new Socket(InetAddress.getLocalHost(), infoServ.getPortIp());
+            sCli = new Socket(InetAddress.getLocalHost().getHostAddress(), infoServ.getPortIp());
             out2serv = new ObjectOutputStream(sCli.getOutputStream());
             inServ = new ObjectInputStream(sCli.getInputStream());
         } catch (ClassNotFoundException e) {
@@ -84,7 +95,8 @@ public class Client {
             out2serv.writeObject(log);
             isLogged = (boolean) inServ.readObject();
             if (isLogged) this.username = username;
-        } catch (IOException | ClassNotFoundException e) {
+        }  catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
             System.err.println("Login Error in communication with server!");
         }
         return isLogged;
@@ -102,44 +114,45 @@ public class Client {
         return isLogged;
     }
 
-    public boolean editProfileName(String newName){
+    public boolean editProfileName(String newName) {
         if (!isLogged) return false;
 
-        Cli2ServChgProf prof = new Cli2ServChgProf(newName,username, Cli2ServChgProf.typeEdit.EDIT_NAME);
+        Cli2ServChgProf prof = new Cli2ServChgProf(newName, username, Cli2ServChgProf.typeEdit.EDIT_NAME);
         boolean success = false;
-        try{
+        try {
             out2serv.writeObject(prof);
             success = (boolean) inServ.readObject();
-        }catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error editing name in profile in communication with server!");
         }
         return success;
     }
-    public boolean editProfileUsername(String newUsername,String password){
+
+    public boolean editProfileUsername(String newUsername, String password) {
         if (!isLogged) return false;
 
-        Cli2ServChgProf prof = new Cli2ServChgProf(username,newUsername,password,Cli2ServChgProf.typeEdit.EDIT_USERNAME);
+        Cli2ServChgProf prof = new Cli2ServChgProf(username, newUsername, password, Cli2ServChgProf.typeEdit.EDIT_USERNAME);
         boolean success = false;
-        try{
+        try {
             out2serv.writeObject(prof);
             success = (boolean) inServ.readObject();
             if (success)
                 username = newUsername;
-        }catch (IOException | ClassNotFoundException e){
+        } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error editing username in profile in communication with server");
         }
         return success;
     }
 
-    public boolean editProfilePass(String password,String newPassword){
+    public boolean editProfilePass(String password, String newPassword) {
         if (!isLogged) return false;
 
-        Cli2ServChgProf prof = new Cli2ServChgProf(username,newPassword,password,Cli2ServChgProf.typeEdit.EDIT_PASSWORD);
+        Cli2ServChgProf prof = new Cli2ServChgProf(username, newPassword, password, Cli2ServChgProf.typeEdit.EDIT_PASSWORD);
         boolean success = false;
-        try{
+        try {
             out2serv.writeObject(prof);
             success = (boolean) inServ.readObject();
-        }catch (IOException | ClassNotFoundException e){
+        } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error editing password in profile in communication with server");
         }
         return success;
@@ -150,7 +163,9 @@ public class Client {
             out2serv.writeObject(new Cli2ServExit(username));
             inServ.readObject(); // Wait for response of server to close client
         } catch (IOException | ClassNotFoundException e) {
-           e.getMessage();
+            e.getMessage();
         }
     }
+
+
 }

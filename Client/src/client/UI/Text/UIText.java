@@ -44,12 +44,11 @@ public class UIText {
     }
 
     private void menuLoginReg() {
+        boolean success = false;
         switch (Utils.askOption("Login","Register","Exit")) {
             case 0 -> exit = true;
             case 1 -> {
-                boolean success = false;
                 int attempts = 0;
-
                 do {
                     success = logic.login(Utils.askString("Username: "), Utils.askString("Password: "));
 
@@ -64,7 +63,15 @@ public class UIText {
                     }
                 } while (!success);
             }
-            case 2 -> logic.register(Utils.askString("Username: "), Utils.askString("Name: "), Utils.askString("Password: "));
+            case 2 -> {
+                success = logic.register(Utils.askString("Username: "), Utils.askString("Name: "), Utils.askString("Password: "));
+                if(success)
+                    System.out.println("Register with success!");
+                else {
+                    menuLoginReg();
+                    System.out.println("It was not possible to register this user!");
+                }
+            }
         }
     }
 
@@ -73,7 +80,6 @@ public class UIText {
             case 0->{
 
             }
-
             case 1->{
                     if(logic.editProfileName(Utils.askString("Enter a new name: ")))
                         System.out.println("Success editing profile name");

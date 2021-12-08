@@ -16,8 +16,9 @@ public class ThreadGrds extends Thread {
     @Override
     public void run() {
         DatagramPacket dp;
-        MulticastSocket ms = null;
+        MulticastSocket ms;
 
+        /* GRDS INFORMA QUE SE TEM DE ATUALIZAR*/
         try {
             ms = new MulticastSocket(Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
 
@@ -33,8 +34,9 @@ public class ThreadGrds extends Thread {
                 String msg = new String(dp.getData(), 0, dp.getLength());
 
                 if (msg.contains("BD_UPDATE")) {    // inform you that changes have occurred and send a message to your customers
-                    System.out.println("DEBUG: A base de dados foi atualizada");
+
                     for (ThreadClient client : clients) {
+
                         client.refreshDB(); //TODO: Informar só os clientes que tem de atualizar a base de dados
                     }
                 }

@@ -27,7 +27,7 @@ public class ServerData extends InetSocketAddress {
     }
 
     public int getNumTimeouts() {
-        return Math.toIntExact((Calendar.getInstance().getTimeInMillis() - lastPinged) / 20 * 1000);
+        return Math.toIntExact((Calendar.getInstance().getTimeInMillis() - lastPinged) / (20 * 1000));
     }
 
     public void newClient() {numClientsAtri++;}

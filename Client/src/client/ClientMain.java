@@ -10,6 +10,8 @@ public class ClientMain {
         try{
             if(args.length == 2) {
                 Client logic = new Client(args);
+                if(logic.getNoServer())
+                    return;
                 UIText ui = new UIText(logic);
                 ui.run();
             }

@@ -22,7 +22,7 @@ public class ThreadMulticast extends Thread {
             ms = new MulticastSocket(Multicast.MULTICAST_GRDS_SEARCH_PORT);
             InetAddress mulIP = InetAddress.getByName(Multicast.MULTICAST_GRDS_SEARCH_IP);
             InetSocketAddress isa = new InetSocketAddress(mulIP, Multicast.MULTICAST_GRDS_SEARCH_PORT);
-            NetworkInterface ni = NetworkInterface.getByName("wlan1");
+            NetworkInterface ni = NetworkInterface.getByName("wlan0");
             ms.joinGroup(isa,ni);
 
             DatagramPacket dp = new DatagramPacket(new byte[256],256);

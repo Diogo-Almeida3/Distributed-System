@@ -148,7 +148,7 @@ public class Grds {
                         Cli2Grds data = (Cli2Grds) systemReq;
                         DatagramSocket ds = new DatagramSocket();
                         try {
-                            ServerData serv = null;
+                            ServerData serv;
                             synchronized (servers) {
                                 serv = getServer();
                                 serv.newClient();
@@ -193,8 +193,8 @@ public class Grds {
             throw new OperationNotSupportedException();
         ServerData servMin = servers.get(0);
         int minCli = servMin.getNumCli();
-        for (ServerData serv : servers) {
-            if (serv.getNumCli() < minCli && serv.getNumTimeouts() < 1) {
+        for (ServerData serv : servers) { //2 Servidores -> 1º -> 1 cli | 2ª -> 0 cli
+            if (serv.getNumCli() < minCli && serv.getNumTimeouts() < 1) { //O nClientes no server for menor que o do server atribuido && nao tiver timeouts
                 minCli = serv.getNumCli();
                 servMin = serv;
             }
