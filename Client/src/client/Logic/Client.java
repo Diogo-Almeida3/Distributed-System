@@ -69,7 +69,7 @@ public class Client {
         Cli2Grds infoServ = null;
         try {
             infoServ = (Cli2Grds) ois.readObject();
-            sCli = new Socket("localhost", infoServ.getPortIp());
+            sCli = new Socket(InetAddress.getLocalHost(), infoServ.getPortIp());
             out2serv = new ObjectOutputStream(sCli.getOutputStream());
             inServ = new ObjectInputStream(sCli.getInputStream());
         } catch (ClassNotFoundException e) {

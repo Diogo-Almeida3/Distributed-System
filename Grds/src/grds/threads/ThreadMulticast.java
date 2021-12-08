@@ -1,14 +1,13 @@
 package grds.threads;
 
+import Constants.Multicast;
+
 import java.io.*;
 import java.net.*;
 
 public class ThreadMulticast extends Thread {
 
     private int myPort;
-
-    private final String MULTICAST_IP = "230.30.30.30";
-    private final int MULTICAST_PORT = 3030;
 
     public ThreadMulticast(int myPort) {
         this.myPort = myPort;
@@ -20,9 +19,9 @@ public class ThreadMulticast extends Thread {
         DatagramSocket ds = null;
         try {
             // Receive request on multicast
-            ms = new MulticastSocket(MULTICAST_PORT);
-            InetAddress mulIP = InetAddress.getByName(MULTICAST_IP);
-            InetSocketAddress isa = new InetSocketAddress(mulIP,MULTICAST_PORT);
+            ms = new MulticastSocket(Multicast.MULTICAST_GRDS_SEARCH_PORT);
+            InetAddress mulIP = InetAddress.getByName(Multicast.MULTICAST_GRDS_SEARCH_IP);
+            InetSocketAddress isa = new InetSocketAddress(mulIP, Multicast.MULTICAST_GRDS_SEARCH_PORT);
             NetworkInterface ni = NetworkInterface.getByName("wlan1");
             ms.joinGroup(isa,ni);
 

@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.sql.SQLException;
+import java.util.Calendar;
 
 public class ThreadClient extends Thread {
 
@@ -19,9 +20,21 @@ public class ThreadClient extends Thread {
 
     private String cliUsername = null;
 
+    private long lastTimeOn = Calendar.getInstance().getTimeInMillis();
+
+    public String getCliUsername() {
+        return cliUsername;
+    }
+
+    public boolean isOffline() {return Calendar.getInstance().getTimeInMillis() - lastTimeOn > 30 * 1000;}
+
     public ThreadClient(Socket sCli, DB db) {
         this.sCli = sCli;
         this.db = db;
+    }
+
+    public void refreshDB() {
+
     }
 
     public void setExit(boolean exit) {
@@ -47,7 +60,6 @@ public class ThreadClient extends Thread {
                 //todo quando acontece um update na db o sv tem de conseguir avisar todos os outros desse update
 
                 cliMessage = (Cli2Serv) ois.readObject();
-
                 switch (cliMessage.getRequestType()) {
                     case REGISTER -> {
                         Cli2ServReg regData = (Cli2ServReg) cliMessage;
@@ -140,24 +152,27 @@ public class ThreadClient extends Thread {
                     }
                     case EXIT -> {
                         Cli2ServExit cli2ServExit = (Cli2ServExit) cliMessage;
-//                        try {
+                        try {
                             exit = true;
-//                            db.updateState(cli2ServExit.getUsername(), false); //TODO: Verificar se é aqui que ele mudar o username
+                            db.updateState(cli2ServExit.getUsername(), false);
                             System.out.println("User: " + cli2ServExit.getUsername() + " left...");
-//                            oos.writeObject(true);
-//                            break;
-//                        } catch (SQLException e) {
-//                            System.err.println("Error while login...");
-//                        }
+                            oos.writeObject(true);
+                            break;
+                        } catch (SQLException e) {
+                            System.err.println("Error while login...");
+                        }
                         // TODO: Informar GRDS que este servidor tem menos um cliente
                     }
                 }
+                lastTimeOn = Calendar.getInstance().getTimeInMillis();
+                if (cliMessage.getRequestType() != Cli2Serv.RequestType.EXIT)
+                    db.updateState(cliUsername,true);
             }
             catch (SocketException e) {
                 if (!exit) {
                     try {
                         db.updateState(cliUsername, false);
-                        System.out.println("User: " + cliUsername + " asdas ddebug teste  7-12has lost connection...");
+                        System.out.println("User: " + cliUsername + " has lost connection...");
                     } catch (SQLException exception) {
                         System.err.println("Error while login...");
                     }
@@ -167,6 +182,8 @@ public class ThreadClient extends Thread {
             }
             catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
+            } catch (SQLException exception) {
+                exception.printStackTrace();
             }
         }
 

@@ -1,5 +1,6 @@
 package grds;
 
+import Constants.Multicast;
 import data.Cli2Grds;
 import data.Serv2Grds;
 import grds.data.ServerData;
@@ -123,6 +124,18 @@ public class Grds {
                                     if (serv.getIdentifier() == data.getId())
                                         serv.pinged();
                                 }
+                            }
+                            case BD_UPDATE -> {
+                                MulticastSocket ms = new MulticastSocket(Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
+
+                                InetAddress mulIP = InetAddress.getByName(Multicast.MULTICAST_GRDS_IP_DIFFUSION);
+                                InetSocketAddress isa = new InetSocketAddress(mulIP, Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
+                                NetworkInterface ni = NetworkInterface.getByName("wlan1");
+                                ms.joinGroup(isa,ni);
+
+                                byte[] msgBytes = "BD_UPDATE".getBytes();
+                                DatagramPacket dp = new DatagramPacket(msgBytes,msgBytes.length,mulIP, Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
+                                ms.send(dp);
                             }
                             default -> System.err.println("Request of server "+datagramPacket.getAddress().getHostAddress()+"is not possible");
                         }
