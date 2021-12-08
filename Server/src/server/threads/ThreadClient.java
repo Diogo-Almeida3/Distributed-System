@@ -34,7 +34,7 @@ public class ThreadClient extends Thread {
     }
 
     public void refreshDB() {
-        // TODO: refresh interface do cliente
+
     }
 
     public void setExit(boolean exit) {
