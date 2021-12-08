@@ -1,18 +1,18 @@
 package server;
 
 
+import Constants.Multicast;
+import server.threads.ThreadActivityClient;
 import server.threads.ThreadClient;
+import server.threads.ThreadGrds;
 import server.utils.DB;
 
 import java.io.*;
 import java.net.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import server.threads.ThreadPing;
-
-import static server.utils.Constants.*;
 
 public class Server {
 
@@ -53,16 +53,15 @@ public class Server {
                 try {
                     ds = new DatagramSocket(0);
                     /* Multicast sends a request to GRDS */
-                    ms = new MulticastSocket(MULTICAST_PORT);
-                    InetAddress ipBroadCast = InetAddress.getByName(MULTICAST_IP);
-
+                    ms = new MulticastSocket(Multicast.MULTICAST_GRDS_SEARCH_PORT);
+                    InetAddress ipBroadCast = InetAddress.getByName(Multicast.MULTICAST_GRDS_SEARCH_IP);
 
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ObjectOutputStream oos = new ObjectOutputStream(baos);
                     oos.writeObject(ds.getLocalPort());
                     oos.flush();
 
-                    DatagramPacket dpReq = new DatagramPacket(baos.toByteArray(), baos.size(), ipBroadCast, MULTICAST_PORT);
+                    DatagramPacket dpReq = new DatagramPacket(baos.toByteArray(), baos.size(), ipBroadCast, Multicast.MULTICAST_GRDS_SEARCH_PORT);
 
                     ms.send(dpReq);
                     System.out.println("Sending multicast request to grds...");
@@ -108,13 +107,23 @@ public class Server {
         threadPing = new ThreadPing(socketReceiveConnections,grdsIp,grdsPort);
         threadPing.start();
 
+        ArrayList<ThreadClient> clients =  new ArrayList<>();
+
+        ThreadActivityClient threadActivityClient = new ThreadActivityClient(clients,db);
+        threadActivityClient.start();
+
+        ThreadGrds threadGrds = new ThreadGrds(clients);
+        threadGrds.start();
+
         while(true){
             try {
                 Socket sCli = socketReceiveConnections.accept();
-
                 ThreadClient threadClient = new ThreadClient(sCli,db);
                 threadClient.start();
 
+                synchronized (clients) {
+                    clients.add(threadClient);
+                }
 
             } catch (IOException e) {
                 e.printStackTrace();

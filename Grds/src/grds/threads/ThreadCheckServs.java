@@ -22,7 +22,7 @@ public class ThreadCheckServs extends Thread {      // check timeout servers
     public void run() {
         while (!exit) {
             try {
-                Thread.sleep(20 * 1000);
+                Thread.sleep(5 * 1000);
             } catch (InterruptedException e) {}
 
             Iterator it = servers.iterator();

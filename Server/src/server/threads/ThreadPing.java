@@ -35,7 +35,7 @@ public class ThreadPing extends Thread {
 
                 DatagramPacket dpResp = new DatagramPacket(baos.toByteArray(), baos.size(),
                         InetAddress.getByName(grdsIp), grdsPort);
-                java.lang.System.out.println("[ID-"+id+"] Sending my tcp port to the GRDS...");
+                java.lang.System.out.println("["+id+"] Sending my tcp port to the GRDS...");
                 ds.send(dpResp);
 
                 if (!isRegisted) {

@@ -43,6 +43,6 @@ public class Serv2Grds implements Serializable {
     }
 
     public enum Request {
-        REGISTER,PING
+        REGISTER,PING,BD_UPDATE
     }
 }
