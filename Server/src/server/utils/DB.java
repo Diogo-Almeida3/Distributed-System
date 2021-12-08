@@ -110,6 +110,31 @@ public class DB {
         statement.close();
     }
 
+    public ArrayList<String> searchUser(String username){
+        Statement statement;
+        ArrayList<String> userInfo = new ArrayList<>();
+        try {
+            statement = dbConn.createStatement();
+            String sqlQuery = "SELECT username, nome, estado, ultima_vez_online FROM Utilizador";
+            if (username != null)
+                sqlQuery += " WHERE nome like '%" + username + "%' or username like '%" + username + "%'";
+
+            ResultSet resultSet = statement.executeQuery(sqlQuery);
+        while(resultSet.next()){
+            String usernameInfo = resultSet.getString("username");
+            String name = resultSet.getString("nome");
+            String status = resultSet.getString("estado");
+            Date lastTimeOnline = resultSet.getDate("ultima_vez_online");
+            userInfo.add("[" + usernameInfo + "] - " + name + " - Status: " + status + " - Last Time Online: " + lastTimeOnline);
+        }
+
+        } catch (SQLException e) {
+            return null;
+        }
+        return userInfo;
+    }
+
+
     public ArrayList<String> listContacts(String reqUsername) throws SQLException {
         Statement statement = dbConn.createStatement();
         ArrayList<String> users = new ArrayList<>();

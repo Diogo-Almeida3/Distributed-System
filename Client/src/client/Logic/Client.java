@@ -1,10 +1,7 @@
 package client.Logic;
 
 import data.Cli2Grds;
-import data.cli2serv.Cli2ServChgProf;
-import data.cli2serv.Cli2ServExit;
-import data.cli2serv.Cli2ServLog;
-import data.cli2serv.Cli2ServReg;
+import data.cli2serv.*;
 
 import java.io.*;
 import java.net.*;
@@ -156,6 +153,27 @@ public class Client {
             System.err.println("Error editing password in profile in communication with server");
         }
         return success;
+    }
+
+    public String searchUser(String username){
+        if(!isLogged) return null;
+
+        Cli2ServSearch search = new Cli2ServSearch(username);
+        ArrayList<String> success= null ;
+        String infoUsers = null;
+        try{
+            String aux = "";
+            out2serv.writeObject(search);
+            success = (ArrayList<String>) inServ.readObject();
+            for (String info: success) {
+                aux += info +"\n";
+            }
+            if(!aux.equals(""))
+             infoUsers = aux;
+        }catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error search username in communication with server");
+        }
+        return infoUsers;
     }
 
     public void exitServer() {
