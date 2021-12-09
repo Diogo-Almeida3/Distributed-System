@@ -209,7 +209,7 @@ public class ThreadClient extends Thread {
                 if (cliMessage.getRequestType() != Cli2Serv.RequestType.EXIT)
                     db.updateState(cliUsername,true);
 
-                /* Enviar via udp ao grds a dizer que houve alterações */
+                /* Send via udp to the group saying that there were changes */
 
             }
             catch (SocketException e) {

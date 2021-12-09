@@ -17,6 +17,8 @@ public class Client {
     private ObjectInputStream inServ = null;
     private String username = null;
 
+    private ThreadServerTCP threadServerTCP;
+
     private boolean noServer = false;
     private boolean isLogged = false;
 
@@ -89,7 +91,7 @@ public class Client {
             ds.close();
         }
 
-        ThreadServerTCP threadServerTCP = new ThreadServerTCP(this);
+        threadServerTCP = new ThreadServerTCP(this);
 
         Cli2ServTCPport TCPPort = new Cli2ServTCPport(threadServerTCP.getpPort());
         out2serv.writeObject(TCPPort);
@@ -211,8 +213,10 @@ public class Client {
 
     public void exitServer() {
         try {
+            threadServerTCP.setExit(true);
             out2serv.writeObject(new Cli2ServExit(username));
             inServ.readObject(); // Wait for response of server to close client
+            threadServerTCP.getOisServ().close();
         } catch (IOException | ClassNotFoundException e) {
             e.getMessage();
         }

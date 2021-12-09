@@ -25,6 +25,14 @@ public class ThreadServerTCP extends Thread{
         }
     }
 
+    public void setExit(boolean exit) {
+        this.exit = exit;
+    }
+
+    public ObjectInputStream getOisServ() {
+        return oisServ;
+    }
+
     public int getpPort() {return ss.getLocalPort(); }
 
     @Override
@@ -51,7 +59,11 @@ public class ThreadServerTCP extends Thread{
                     }
                 }
             } catch (SocketException e) {
-                logic.connect2serv();
+                if (!exit) {
+                    logic.connect2serv();
+                    exit = true;
+                }
+                break;
             }
             catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -59,7 +71,6 @@ public class ThreadServerTCP extends Thread{
         }
 
         try {
-
             if (ss!=null)
                 ss.close();
             if (oisServ!=null)
