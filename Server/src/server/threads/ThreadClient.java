@@ -169,8 +169,19 @@ public class ThreadClient extends Thread {
                         }
                     }
                     case CREATE_GROUP -> {
+                        Cli2ServCreatGroup creatGroup = (Cli2ServCreatGroup) cliMessage;
+                        if(db.createGroup(creatGroup.getUsername(),creatGroup.getGroupName()))
+                            oos.writeObject(true);
+                         else
+                             oos.writeObject(false);
                     }
                     case JOIN_GROUP -> {
+                        Cli2ServInvGroup cli2ServInvGroup = (Cli2ServInvGroup) cliMessage;
+                        if(db.joinGroup(cliUsername,cli2ServInvGroup.getNameGroup()))
+                            oos.writeObject(true);
+                        else
+                            oos.writeObject(false);
+
                     }
                     case LIST_GROUPS -> {
                     }

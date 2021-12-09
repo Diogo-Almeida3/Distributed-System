@@ -2,17 +2,13 @@ package server;
 
 
 import Constants.Multicast;
-import server.threads.ThreadActivityClient;
-import server.threads.ThreadClient;
-import server.threads.ThreadGrds;
+import server.threads.*;
 import server.utils.DB;
 
 import java.io.*;
 import java.net.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
-
-import server.threads.ThreadPing;
 
 public class Server {
 

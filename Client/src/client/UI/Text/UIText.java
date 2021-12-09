@@ -19,7 +19,7 @@ public class UIText {
         while(!exit){
             switch ( Utils.askOption("Edit Profile", "Send Messages", "Contact List","Search user",
                     "Pending contact requests","Add Contact",
-                    "Delete Contact","Create Group","Exit")){
+                    "Delete Contact","Create Group","Invite for Group","Exit")){
                 case 0 -> {
                     logic.exitServer();
                     exit = true;
@@ -40,10 +40,14 @@ public class UIText {
                         deleteContact();
                 case 8 ->
                         createGroup();
+                case 9->
+                        joinGroup();
             }
         }
 
     }
+
+
 
     private void menuLoginReg() {
         boolean success = false;
@@ -153,6 +157,16 @@ public class UIText {
 
     private void createGroup(){
 
-    }
+        if(logic.createGroup(Utils.askString("Enter a name of a group:")))
+            System.out.println("Group created with success");
+        else
+            System.out.println("Error creating group...");
 
+    }
+    private void joinGroup() {
+        if (logic.joinGroup(Utils.askString("Name of group: ")))
+            System.out.println("Successful sending request to join the group");
+        else
+            System.out.println("Failure to submit request to join the group");
+    }
 }

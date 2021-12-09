@@ -271,4 +271,32 @@ public class Client {
         }
         return list;
     }
+
+    public boolean createGroup(String nameGroup) {
+        if(!isLogged) return false;
+
+        Cli2ServCreatGroup creatGroup = new Cli2ServCreatGroup(username, nameGroup);
+        boolean success = false;
+        try {
+            out2serv.writeObject(creatGroup);
+            success = (boolean) inServ.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error creating group in communication with server");
+        }
+        return success;
+    }
+
+    public boolean joinGroup(String nameGroup) {
+        if(!isLogged) return false;
+
+        Cli2ServInvGroup creatGroup = new Cli2ServInvGroup(nameGroup);
+        boolean success = false;
+        try {
+            out2serv.writeObject(creatGroup);
+            success = (boolean) inServ.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error inviting member to group in communication with server");
+        }
+        return success;
+    }
 }
