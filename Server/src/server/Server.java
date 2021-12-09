@@ -111,17 +111,28 @@ public class Server {
         ThreadGrds threadGrds = new ThreadGrds(clients);
         threadGrds.start();
 
-        while(true){
+        //todo apagar clientes que saem
+        ThreadAcceptCli threadAcceptCli =  new ThreadAcceptCli(socketReceiveConnections,db,clients);
+        threadAcceptCli.run();
+
+        synchronized (threadActivityClient) {
             try {
-                Socket sCli = socketReceiveConnections.accept();
-                ThreadClient threadClient = new ThreadClient(sCli,db);
-                threadClient.start();
-
-                synchronized (clients) {
-                    clients.add(threadClient);
-                }
-
-            } catch (IOException e) {
+                threadActivityClient.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        synchronized (threadGrds) {
+            try {
+                threadGrds.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        synchronized (threadAcceptCli) {
+            try {
+                threadAcceptCli.wait();
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }

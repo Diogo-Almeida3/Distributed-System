@@ -150,7 +150,7 @@ public class DB {
 
         while (resultSet.next()) {
             String sqlQueryList = "SELECT username, nome, estado, ultima_vez_online FROM Utilizador";
-                sqlQueryList += " WHERE username like '" + resultSet.getString("Utilizador_username1") + "'";
+            sqlQueryList += " WHERE username like '" + resultSet.getString("Utilizador_username1") + "'";
 
             ResultSet resultSetList = statement1.executeQuery(sqlQueryList);
             resultSetList.next();
@@ -169,7 +169,7 @@ public class DB {
         return contacts;
     }
 
-    public boolean addContact(String username, String addUsername) throws SQLException{
+    public boolean addContact(String username, String addUsername) throws SQLException {
         boolean success = false;
         Statement statement = dbConn.createStatement();
 
@@ -186,12 +186,12 @@ public class DB {
         return success;
     }
 
-    public boolean deleteContact(String username, String usernameDel) throws SQLException{
+    public boolean deleteContact(String username, String usernameDel) throws SQLException {
 
         boolean success = false;
         Statement statement = dbConn.createStatement();
 
-        String sqlQueryRegist = "DELETE FROM Utilizador_has_Utilizador WHERE Utilizador_username LIKE '"+username+"' AND Utilizador_username1 like '"+usernameDel+"'";
+        String sqlQueryRegist = "DELETE FROM Utilizador_has_Utilizador WHERE Utilizador_username LIKE '" + username + "' AND Utilizador_username1 like '" + usernameDel + "'";
 
         try {
             statement.executeUpdate(sqlQueryRegist);
@@ -210,7 +210,7 @@ public class DB {
         try {
             statement = dbConn.createStatement();
             String sqlQuery = "SELECT Utilizador_username1 FROM Utilizador_has_Utilizador";
-                sqlQuery += " WHERE Utilizador_username like '" + username + "' and isPendenteContacto=true";
+            sqlQuery += " WHERE Utilizador_username like '" + username + "' and isPendenteContacto=true";
 
             ResultSet resultSet = statement.executeQuery(sqlQuery);
             while (resultSet.next()) {
@@ -226,23 +226,92 @@ public class DB {
         return userInfo;
     }
 
+    public boolean createGroup(String username, String groupName) throws SQLException {
+        boolean success = false;
+        Statement statement = dbConn.createStatement();
+        Statement statement1 = dbConn.createStatement();
 
-//    public void updateUser(int id, String name, String birthdate) throws SQLException
-//    {
-//        Statement statement = dbConn.createStatement();
-//
-//        String sqlQuery = "UPDATE users SET name='" + name + "', " +
-//                "BIRTHDATE='" + birthdate + "' WHERE id=" + id;
-//        statement.executeUpdate(sqlQuery);
-//        statement.close();
-//    }
-//
-//    public void deleteUser(int id) throws SQLException
-//    {
-//        Statement statement = dbConn.createStatement();
-//
-//        String sqlQuery = "DELETE FROM users WHERE id=" + id;
-//        statement.executeUpdate(sqlQuery);
-//        statement.close();
-//    }
+        String sqlQueryCheck = "SELECT * FROM Grupo WHERE nome like '" + groupName.toLowerCase() + "' AND Utilizador_username like '" + username + "'";
+
+        ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
+        boolean aux = resultSet.next();
+        if (!aux) {
+            java.sql.Timestamp date = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
+            String sqlQueryRegist = "INSERT INTO Grupo (nome,data_criacao,Utilizador_username) VALUES ('" + groupName.toLowerCase() + "','" + date + "','" + username + "')";
+
+            try {
+                statement.executeUpdate(sqlQueryRegist);
+                success = true;
+            } catch (SQLException e) {
+                success = false;
+            }
+            if (success) {
+                String sqlQuery = "SELECT id FROM Grupo";
+                if (username != null)
+                    sqlQuery += " WHERE Utilizador_username like '" + username + "' and nome like '" + groupName + "'";
+
+                ResultSet resultSetID = statement.executeQuery(sqlQuery);
+                while (resultSetID.next()) {
+                    String groupId = resultSetID.getString("id");
+                    String sqlQueryID = "INSERT INTO Grupo_has_Utilizador VALUES ('" + groupId + "','" + username + "',false)";
+                    try {
+                        statement1.executeUpdate(sqlQueryID);
+                        success = true;
+                    } catch (SQLException e) {
+                        //todo caso falhe apagar o grupo
+                        Statement statement2 = dbConn.createStatement();
+                        String sqlQueryDelete= "DELETE FROM Grupo WHERE Utilizador_username LIKE '" + username + "' AND nome like '" + groupName + "'";
+                        statement2.executeQuery(sqlQueryDelete);
+                        success = false;
+                    }
+                }
+                statement.close();
+                statement1.close();
+                return success;
+            }
+
+        }
+        statement.close();
+        return false;
+    }
+
+    public boolean joinGroup(String username, String nameGroup) {
+
+        return false;
+    }
+
+    public ArrayList<String> listGroups() {
+        Statement statement;
+        Statement statement1;
+        ArrayList<String> groupInfo = new ArrayList<>();
+        try {
+            statement = dbConn.createStatement();
+            String sqlQuery = "SELECT id,nome,data_criacao,Utilizador_username FROM Grupo ";
+
+            ResultSet resultSet = statement.executeQuery(sqlQuery);
+            while (resultSet.next()) {
+                String groupName = resultSet.getString("nome");
+                String data = resultSet.getString("data_criacao");
+                String creatorName = resultSet.getString("Utilizador_username");
+                String groupID = resultSet.getString("id");
+
+                groupInfo.add("[" + groupName + "] - Creator: " + creatorName + " - Creation date: " + data);
+                
+                String sqlQueryGetUsers = "Select Utilizador_username FROM Grupo_has_Utilizador WHERE isPendenteGrupo=false AND Group_id like '" + groupID + "'";
+                statement1 = dbConn.createStatement();
+                ResultSet resultSetUsers = statement1.executeQuery(sqlQueryGetUsers);
+                while(resultSetUsers.next()){
+                    String user = resultSetUsers.getString("Utilizador_username");
+                    groupInfo.add("\t -> " + user);
+                }
+            }
+            
+            resultSet.close();
+            statement.close();
+        } catch (SQLException e) {
+            return null;
+        }
+
+        return groupInfo;
+    }
 }
