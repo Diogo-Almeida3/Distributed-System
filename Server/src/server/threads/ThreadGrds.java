@@ -1,6 +1,9 @@
 package server.threads;
 
 import Constants.Multicast;
+import data.serv2cli.Serv2Cli;
+
+import javax.print.attribute.standard.MediaSize;
 import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
@@ -24,7 +27,7 @@ public class ThreadGrds extends Thread {
 
             InetAddress mulIP = InetAddress.getByName(Multicast.MULTICAST_GRDS_IP_DIFFUSION);
             InetSocketAddress isa = new InetSocketAddress(mulIP,Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
-            NetworkInterface ni = NetworkInterface.getByName("wlan0");
+            NetworkInterface ni = NetworkInterface.getByName("wlan1");
             ms.joinGroup(isa,ni);
 
             while (true) {
@@ -34,10 +37,8 @@ public class ThreadGrds extends Thread {
                 String msg = new String(dp.getData(), 0, dp.getLength());
 
                 if (msg.contains("BD_UPDATE")) {    // inform you that changes have occurred and send a message to your customers
-
                     for (ThreadClient client : clients) {
-
-                        client.refreshDB(); //TODO: Informar só os clientes que tem de atualizar a base de dados
+                        client.notification(Serv2Cli.Request.NOTIFICATION_MESSAGE); //TODO: Informar só os clientes que tem de atualizar a base de dados --> Mudar tipo
                     }
                 }
             }

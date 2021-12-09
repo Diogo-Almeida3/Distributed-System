@@ -1,11 +1,15 @@
 package server.threads;
 
+import data.Serv2Grds;
 import data.cli2serv.*;
+import data.serv2cli.Serv2Cli;
 import server.utils.DB;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.sql.SQLException;
@@ -17,6 +21,11 @@ public class ThreadClient extends Thread {
     private boolean exit = false;
 
     private Socket sCli;
+
+    private Socket socketSend2Cli;
+    private OutputStream os2Cli;
+    private ObjectOutputStream oos2Cli;
+
     private DB db;
 
     private String cliUsername = null;
@@ -29,17 +38,17 @@ public class ThreadClient extends Thread {
 
     public boolean isOffline() {return Calendar.getInstance().getTimeInMillis() - lastTimeOn > 30 * 1000;}
 
-    public ThreadClient(Socket sCli, DB db) {
+    public ThreadClient(Socket sCli, DB db) throws IOException {
         this.sCli = sCli;
         this.db = db;
     }
 
-    public void refreshDB() {
-
-    }
-
     public void setExit(boolean exit) {
         this.exit = exit;
+    }
+
+    public void notification(Serv2Cli.Request request) throws IOException {
+        Serv2Cli send = new Serv2Cli(request);
     }
 
     @Override
@@ -47,7 +56,6 @@ public class ThreadClient extends Thread {
         ObjectOutputStream oos = null;
         ObjectInputStream ois = null;
         Cli2Serv cliMessage = null;
-
 
         try {
             oos = new ObjectOutputStream(sCli.getOutputStream());
@@ -134,13 +142,31 @@ public class ThreadClient extends Thread {
 
                     }
                     case ADD_CONTACT -> {
+                        Cli2ServAdd contact = (Cli2ServAdd) cliMessage;
+
+                        if (db.addContact(contact.getUsername(), contact.getAddUsername())){
+                            oos.writeObject(true);
+                            System.out.println("Invite from " + contact.getUsername() + " to " + contact.getAddUsername());
+                        } else {
+                            oos.writeObject(false);
+                            System.out.println("User failed login...");
+                        }
                     }
                     case LIST_CONTACT -> {
                         Cli2ServListContacts listContacts = (Cli2ServListContacts) cliMessage;
-                        db.listContacts(listContacts.getUsername());
-                        //Todo Resolver o que pode ser feito
+                        ArrayList<String> info = db.listContacts(listContacts.getUsername());
+                        oos.writeObject(info);
                     }
                     case DELETE_CONTACT -> {
+                        Cli2ServDel deleContact = (Cli2ServDel) cliMessage;
+
+                        if(db.deleteContact(deleContact.getUsername(),deleContact.getUsernameDel())){
+                            oos.writeObject(true);
+                            System.out.println("Invite from " + deleContact.getUsername() + " to " + deleContact.getUsernameDel());
+                        } else {
+                            oos.writeObject(false);
+                            System.out.println("User failed login...");
+                        }
                     }
                     case CREATE_GROUP -> {
                     }
@@ -152,7 +178,10 @@ public class ThreadClient extends Thread {
                     }
                     case LEAVE_GROUP -> {
                     }
-                    case CONTACT_REQUEST -> {
+                    case LIST_REQUESTS -> {
+                        Cli2ServPendContact pendContact = (Cli2ServPendContact) cliMessage;
+                        ArrayList<String> info = db.listPendingContacts(pendContact.getUsername());
+                        oos.writeObject(info);
                     }
                     case SEND_MESSAGE -> {
                     }
@@ -168,6 +197,12 @@ public class ThreadClient extends Thread {
                             System.err.println("Error while login...");
                         }
                         // TODO: Informar GRDS que este servidor tem menos um cliente
+                    }
+                    case TCP_PORT -> {
+                        Cli2ServTCPport cli2ServTCPport = (Cli2ServTCPport) cliMessage;
+                        socketSend2Cli = new Socket(InetAddress.getLocalHost().getHostAddress(),cli2ServTCPport.getPort());
+                        os2Cli = socketSend2Cli.getOutputStream();
+                        oos2Cli = new ObjectOutputStream(os2Cli);
                     }
                 }
                 lastTimeOn = Calendar.getInstance().getTimeInMillis();

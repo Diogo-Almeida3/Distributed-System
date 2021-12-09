@@ -28,18 +28,22 @@ public class Client {
     public Client(String args[]) throws IOException {
         this.grdsIp = args[0];
         this.grdsPort = Integer.parseInt(args[1]);
-        getComs();
+        ds = new DatagramSocket();
+        connect2serv();
     }
 
     public boolean getNoServer() {
         return noServer;
     }
 
-    private void getComs() throws IOException {
-        ds = new DatagramSocket();
-        inicialComsSend();
-        inicialComsReceived();
-
+    public void connect2serv() {
+        try {
+            inicialComsSend();
+            inicialComsReceived();
+        } catch (IOException e) {
+            System.err.println("Error to connect to server");
+            return;
+        }
     }
 
     public void inicialComsSend() throws IOException {
@@ -84,6 +88,13 @@ public class Client {
             e.printStackTrace();
             ds.close();
         }
+
+        ThreadServerTCP threadServerTCP = new ThreadServerTCP(this);
+
+        Cli2ServTCPport TCPPort = new Cli2ServTCPport(threadServerTCP.getpPort());
+        out2serv.writeObject(TCPPort);
+
+        threadServerTCP.start();
     }
 
     public boolean login(String username, String password) {
@@ -92,7 +103,7 @@ public class Client {
             out2serv.writeObject(log);
             isLogged = (boolean) inServ.readObject();
             if (isLogged) this.username = username;
-        }  catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
             System.err.println("Login Error in communication with server!");
         }
@@ -155,26 +166,48 @@ public class Client {
         return success;
     }
 
-    public String searchUser(String username){
-        if(!isLogged) return null;
+    public String searchUser(String username) {
+        if (!isLogged) return null;
 
         Cli2ServSearch search = new Cli2ServSearch(username);
-        ArrayList<String> success= null ;
+        ArrayList<String> success = null;
         String infoUsers = null;
-        try{
+        try {
             String aux = "";
             out2serv.writeObject(search);
             success = (ArrayList<String>) inServ.readObject();
-            for (String info: success) {
-                aux += info +"\n";
+            for (String info : success) {
+                aux += info + "\n";
             }
-            if(!aux.equals(""))
-             infoUsers = aux;
-        }catch (IOException | ClassNotFoundException e) {
+            if (!aux.equals(""))
+                infoUsers = aux;
+        } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error search username in communication with server");
         }
         return infoUsers;
     }
+
+    public String contactList(String username) {
+        if (!isLogged) return null;
+
+        Cli2ServListContacts listContacts = new Cli2ServListContacts(username);
+        ArrayList<String> success = null;
+        String infoUsers = null;
+        try {
+            String aux = "";
+            out2serv.writeObject(listContacts);
+            success = (ArrayList<String>) inServ.readObject();
+            for (String info : success) {
+                aux += info + "\n";
+            }
+            if (!aux.equals(""))
+                infoUsers = aux;
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error listing contacts in communication with server");
+        }
+        return infoUsers;
+    }
+
 
     public void exitServer() {
         try {
@@ -185,5 +218,53 @@ public class Client {
         }
     }
 
+    public boolean addContact(String addUsername) {
+        if (!isLogged) return false;
 
+        Cli2ServAdd addContact = new Cli2ServAdd(username, addUsername);
+        boolean success = false;
+        try {
+            out2serv.writeObject(addContact);
+            success = (boolean) inServ.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error adding an user in communication with server");
+        }
+        return success;
+    }
+
+    public boolean deleteContact(String usernameDel) {
+
+        if (!isLogged) return false;
+
+        Cli2ServDel deleContact = new Cli2ServDel(username,usernameDel);
+        boolean success = false;
+        try {
+            out2serv.writeObject(deleContact);
+            success = (boolean) inServ.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error deleting contact in communication with server");
+        }
+        return success;
+    }
+
+    public String pendingContactList(String username) {
+        if (!isLogged) return null;
+
+        Cli2ServPendContact listContacts = new Cli2ServPendContact(username);
+        ArrayList<String> success = null;
+        String list = null;
+        try {
+            String aux = "";
+            out2serv.writeObject(listContacts);
+            success = (ArrayList<String>) inServ.readObject();
+            for (String info : success) {
+                aux += info + "\n";
+            }
+            if (!aux.equals(""))
+                list = aux;
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error listing pending contacts in communication with server");
+        }
+        return list;
+    }
 }

@@ -112,7 +112,11 @@ public class UIText {
     }
 
     private void contactList(){
-
+        String list = logic.contactList(logic.getUsername());
+        if(list != null)
+            System.out.println(list);
+        else
+            System.out.println("Your Contact list is empty.Add contacts to your list.");
     }
 
     private void searchUser(){
@@ -124,13 +128,26 @@ public class UIText {
     }
 
     private void pendingContactRequest(){
+        String pendingList = logic.pendingContactList(logic.getUsername());
+        if(pendingList != null)
+            System.out.println(pendingList);
+        else
+            System.out.println("Your list of pending contacts request is empty");
+
 
     }
     private void addContact(){
-
+        if(logic.addContact(Utils.askString("Enter a username: ")))
+            System.out.println("Contact invitation sent.");
+        else
+            System.out.println("User not Found.");
     }
 
     private void deleteContact(){
+        if(logic.deleteContact(Utils.askString("Enter a contact to delete from the list: ")))
+            System.out.println("Contact deleted.");
+        else
+            System.out.println("Error deleting contact");
 
     }
 

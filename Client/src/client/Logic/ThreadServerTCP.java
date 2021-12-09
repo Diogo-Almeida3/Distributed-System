@@ -2,54 +2,71 @@ package client.Logic;
 
 import data.serv2cli.Serv2Cli;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class ThreadServerTCP extends Thread{
 
-    private Socket sCli;
-    private ObjectInputStream in2Serv;
+    private ServerSocket ss = null;
+    private InputStream isServ = null;
+    private Socket sCli = null;
+    private ObjectInputStream oisServ = null;
     private boolean exit=false;
+    private Client logic;
 
-    public ThreadServerTCP(Socket sCli){
-        this.sCli = sCli;
+    public ThreadServerTCP(Client logic){
         try {
-            in2Serv = new ObjectInputStream(sCli.getInputStream());
+            ss = new ServerSocket(0);
+            this.logic = logic;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    public int getpPort() {return ss.getLocalPort(); }
+
     @Override
     public void run() {
-
+        try {
+            Socket sCli = ss.accept(); // Wait for connection with server
+            isServ = sCli.getInputStream();
+            oisServ = new ObjectInputStream(isServ);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         Serv2Cli serv2Cli = null;
         while(!exit) {
-
             try {
-                serv2Cli = (Serv2Cli) in2Serv.readObject();
+                serv2Cli = (Serv2Cli) oisServ.readObject();
 
-                // tratar consoante o tipo
                 switch (serv2Cli.getRequest()){
-
                     case NOTIFICATION_MESSAGE -> {
-
+                        System.out.println("NOTIFICATION_MESSAGE");
                     }
 
                     case NOTIFICATION_FILE -> {
-
+                        System.out.println("NOTIFICATION_FILE");
                     }
                 }
-
-            } catch (IOException |ClassNotFoundException e) {
+            } catch (SocketException e) {
+                logic.connect2serv();
+            }
+            catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }
 
         try {
-            in2Serv.close();
+
+            if (ss!=null)
+                ss.close();
+            if (oisServ!=null)
+                oisServ.close();
+            if (isServ!=null)
+                isServ.close();
+
         } catch (IOException e) {
             e.printStackTrace();
         }

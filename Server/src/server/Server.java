@@ -134,6 +134,14 @@ public class Server {
     }
 
     public static void main(String[] args) {
+//        DB db = null;
+//        try {
+//            db = new DB();
+//            db.deleteContact("dialmeida","jpbp");
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+
         try{
             if(args.length == 3 || args.length ==1 )
                 new Server(args);
