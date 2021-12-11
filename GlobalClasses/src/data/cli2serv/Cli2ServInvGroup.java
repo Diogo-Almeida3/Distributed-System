@@ -2,14 +2,14 @@ package data.cli2serv;
 
 public class Cli2ServInvGroup extends Cli2Serv {
 
-    private String nameGroup;
-    public Cli2ServInvGroup(String nameGroup) {
+    private int groupId;
+    public Cli2ServInvGroup(int groupId) {
         super(RequestType.JOIN_GROUP);
-        this.nameGroup = nameGroup;
+        this.groupId = groupId;
     }
 
-    public String getNameGroup() {
-        return nameGroup;
+    public int getGroupID() {
+        return groupId;
     }
     
 }

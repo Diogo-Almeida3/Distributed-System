@@ -2,9 +2,12 @@ package server.threads;
 
 import Constants.Multicast;
 import data.serv2cli.Serv2Cli;
+import data.serv2grds.Serv2GrdsDBup;
 
 import javax.print.attribute.standard.MediaSize;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.*;
 import java.util.ArrayList;
 
@@ -21,7 +24,7 @@ public class ThreadGrds extends Thread {
         DatagramPacket dp;
         MulticastSocket ms;
 
-        /* GRDS INFORMA QUE SE TEM DE ATUALIZAR*/
+        /* GRDS INFORMS YOU THAT YOU HAVE TO UPDATE */
         try {
             ms = new MulticastSocket(Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
 
@@ -31,18 +34,22 @@ public class ThreadGrds extends Thread {
             ms.joinGroup(isa,ni);
 
             while (true) {
-                dp = new DatagramPacket(new byte[512], 512);
+                dp = new DatagramPacket(new byte[3000], 3000);
                 ms.receive(dp);
 
-                String msg = new String(dp.getData(), 0, dp.getLength());
+                ByteArrayInputStream bais = new ByteArrayInputStream(dp.getData());
+                ObjectInputStream ois = new ObjectInputStream(bais);
+                Serv2GrdsDBup data = (Serv2GrdsDBup) ois.readObject();
 
-                if (msg.contains("BD_UPDATE")) {    // inform you that changes have occurred and send a message to your customers
-                    for (ThreadClient client : clients) {
-                        client.notification(Serv2Cli.Request.NOTIFICATION_MESSAGE); //TODO: Informar só os clientes que tem de atualizar a base de dados --> Mudar tipo
-                    }
+                for (ThreadClient client : clients) {
+                    for (String user : data.getUsers())
+                        if (user.equals(client.getCliUsername()))
+                            client.notification(data.getType());
                 }
             }
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }

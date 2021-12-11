@@ -1,7 +1,6 @@
-package data;
+package data.serv2grds;
 
 import java.io.Serializable;
-import java.net.InetAddress;
 
 
 public class Serv2Grds implements Serializable {
@@ -22,12 +21,17 @@ public class Serv2Grds implements Serializable {
         this.id = id;
     }
 
-    public int getId() {
-        return id;
+    public Serv2Grds(Request request, int id) {
+        this.request = request;
+        this.id = id;
     }
 
-    public Serv2Grds(System client, Request register) {
+    public Serv2Grds(Request request) {
         this.request = request;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public void setRequest(Request request) {
@@ -43,6 +47,6 @@ public class Serv2Grds implements Serializable {
     }
 
     public enum Request {
-        REGISTER,PING,BD_UPDATE
+        REGISTER,PING,BD_UPDATE,REMOVE_CLIENT
     }
 }

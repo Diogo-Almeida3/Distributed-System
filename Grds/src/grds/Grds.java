@@ -2,7 +2,8 @@ package grds;
 
 import Constants.Multicast;
 import data.Cli2Grds;
-import data.Serv2Grds;
+import data.serv2grds.Serv2Grds;
+import data.serv2grds.Serv2GrdsDBup;
 import grds.data.ServerData;
 import grds.threads.ThreadCheckServs;
 import grds.threads.ThreadMulticast;
@@ -88,6 +89,18 @@ public class Grds {
 
         @Override
         public void run() {
+            MulticastSocket ms = null;
+            InetAddress mulIP = null;
+            try {
+                ms = new MulticastSocket(Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
+                mulIP = InetAddress.getByName(Multicast.MULTICAST_GRDS_IP_DIFFUSION);
+                InetSocketAddress isa = new InetSocketAddress(mulIP, Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
+                NetworkInterface ni = NetworkInterface.getByName("wlan1");
+                ms.joinGroup(isa,ni);
+            } catch (IOException e) {
+                System.err.println(e.getMessage());
+            }
+
             while (run) {
                 try {
                     DatagramPacket datagramPacket = new DatagramPacket(new byte[5000], 5000);
@@ -101,7 +114,7 @@ public class Grds {
                     if (systemReq instanceof Serv2Grds) {
                         Serv2Grds data = (Serv2Grds) systemReq;
 
-                        switch (data.getRequest()) {
+                        switch (data.getRequest()) { // TODO: Crash here
                             case REGISTER -> {
                                 ServerData serv = new ServerData(datagramPacket.getAddress(), data.getPort());
                                 synchronized (servers) {
@@ -126,16 +139,30 @@ public class Grds {
                                 }
                             }
                             case BD_UPDATE -> {
-                                MulticastSocket ms = new MulticastSocket(Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
+                                if (systemReq instanceof Serv2GrdsDBup) {
+                                    Serv2GrdsDBup db_update_data = (Serv2GrdsDBup) data;
+                                    System.out.println("Difusion " + db_update_data.getType());
+                                    if (ms != null) {
+                                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                        ObjectOutputStream oos = new ObjectOutputStream(baos);
+                                        oos.writeObject(db_update_data);
+                                        oos.flush();
 
-                                InetAddress mulIP = InetAddress.getByName(Multicast.MULTICAST_GRDS_IP_DIFFUSION);
-                                InetSocketAddress isa = new InetSocketAddress(mulIP, Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
-                                NetworkInterface ni = NetworkInterface.getByName("wlan1");
-                                ms.joinGroup(isa,ni);
+                                        byte [] send = baos.toByteArray();
 
-                                byte[] msgBytes = "BD_UPDATE".getBytes();
-                                DatagramPacket dp = new DatagramPacket(msgBytes,msgBytes.length,mulIP, Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
-                                ms.send(dp);
+                                        DatagramPacket dp = new DatagramPacket(send,send.length,mulIP, Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
+                                        ms.send(dp);
+                                    }
+                                }
+                                else break;
+                            }
+                            case REMOVE_CLIENT -> {
+                                for (ServerData serv : servers) {
+                                    if (serv.getIdentifier() == ((Serv2Grds) systemReq).getId()) {
+                                        serv.removeClient();
+                                        System.out.println("["+serv.getIdentifier()+"] One client has been left...");
+                                    }
+                                }
                             }
                             default -> System.err.println("Request of server "+datagramPacket.getAddress().getHostAddress()+"is not possible");
                         }

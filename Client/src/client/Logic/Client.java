@@ -286,17 +286,68 @@ public class Client {
         return success;
     }
 
-    public boolean joinGroup(String nameGroup) {
+    public boolean joinGroup(int groupId) {
         if(!isLogged) return false;
-
-        Cli2ServInvGroup creatGroup = new Cli2ServInvGroup(nameGroup);
+        //todo Ver esta merda porque tem de mandar um numero
+        Cli2ServInvGroup creatGroup = new Cli2ServInvGroup(groupId);
         boolean success = false;
         try {
             out2serv.writeObject(creatGroup);
             success = (boolean) inServ.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Error inviting member to group in communication with server");
+            System.err.println("Error trying to join a group in communication with server");
         }
         return success;
+    }
+    public boolean leaveGroup(int groupId) {
+        if(!isLogged) return false;
+
+        Cli2ServLeavGroup leavegroup = new Cli2ServLeavGroup(groupId);
+        boolean success = false;
+        try {
+            out2serv.writeObject(leavegroup);
+            success = (boolean) inServ.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error trying to leave group in communication with server");
+        }
+        return success;
+    }
+
+
+    public String listGroups() {
+    if (!isLogged) return null;
+
+        Cli2ServListGroup listContacts = new Cli2ServListGroup();
+        ArrayList<String> success = null;
+        String infoGroups = null;
+        try {
+            String aux = "";
+            out2serv.writeObject(listContacts);
+            success = (ArrayList<String>) inServ.readObject();
+            for (String info : success) {
+                aux += info + "\n";
+            }
+            if (!aux.equals(""))
+                infoGroups = aux;
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error listing groups in communication with server");
+        }
+        return infoGroups;
+    }
+
+
+    public boolean renameGroup(int idGroup, String nameNewGroup) {
+        if (!isLogged) return false;
+
+        Cli2ServAdminGroup adminGroup = new Cli2ServAdminGroup(idGroup, nameNewGroup, Cli2ServAdminGroup.typeEdit.EDIT_NAME);
+        boolean success = false;
+        try {
+            out2serv.writeObject(adminGroup);
+            success = (boolean) inServ.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error editing name group in communication with server!");
+        }
+        return success;
+
     }
 }

@@ -1,17 +1,14 @@
 package server.threads;
 
-import data.Serv2Grds;
+import Constants.Notification;
+import data.serv2grds.Serv2Grds;
 import data.cli2serv.*;
 import data.serv2cli.Serv2Cli;
+import data.serv2grds.Serv2GrdsDBup;
 import server.utils.DB;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.SocketException;
+import java.io.*;
+import java.net.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -20,11 +17,16 @@ public class ThreadClient extends Thread {
 
     private boolean exit = false;
 
+    private ThreadPing threadPing;
+
     private Socket sCli;
 
     private Socket socketSend2Cli;
     private OutputStream os2Cli;
     private ObjectOutputStream oos2Cli;
+
+    private String grdsIp;
+    private int grdsPort;
 
     private DB db;
 
@@ -32,23 +34,55 @@ public class ThreadClient extends Thread {
 
     private long lastTimeOn = Calendar.getInstance().getTimeInMillis();
 
+    private ServerSocket socket2grds;
+
     public String getCliUsername() {
         return cliUsername;
     }
 
-    public boolean isOffline() {return Calendar.getInstance().getTimeInMillis() - lastTimeOn > 30 * 1000;}
+    public boolean isOffline() {
+        return Calendar.getInstance().getTimeInMillis() - lastTimeOn > 30 * 1000;
+    }
 
-    public ThreadClient(Socket sCli, DB db) throws IOException {
+    public ThreadClient(Socket sCli, DB db, String grdsIp, int grdsPort, ThreadPing threadPing) throws IOException {
         this.sCli = sCli;
         this.db = db;
+        this.grdsIp = grdsIp;
+        this.grdsPort = grdsPort;
+        this.threadPing = threadPing;
+        this.socket2grds = new ServerSocket(0);
     }
 
     public void setExit(boolean exit) {
         this.exit = exit;
     }
 
-    public void notification(Serv2Cli.Request request) throws IOException {
+    public void notification(Notification request) throws IOException {
         Serv2Cli send = new Serv2Cli(request);
+        oos2Cli.writeObject(send);
+    }
+
+    private int servID() {
+        return threadPing.getIdServ();
+    }
+
+    private void send2GRDS(Serv2Grds info2send) {
+        DatagramSocket ds = null;
+        try {
+            ds = new DatagramSocket();
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+            oos.writeObject(info2send);
+            oos.flush();
+
+            DatagramPacket dpResp = new DatagramPacket(baos.toByteArray(), baos.size(),
+                    InetAddress.getByName(grdsIp), grdsPort);
+            ds.send(dpResp);
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
     }
 
     @Override
@@ -66,8 +100,6 @@ public class ThreadClient extends Thread {
 
         while (!exit) {
             try {
-                //todo quando acontece um update na db o sv tem de conseguir avisar todos os outros desse update
-
                 cliMessage = (Cli2Serv) ois.readObject();
                 switch (cliMessage.getRequestType()) {
                     case REGISTER -> {
@@ -78,9 +110,10 @@ public class ThreadClient extends Thread {
                                 db.updateState(cliUsername, true);
                                 oos.writeObject(true);
                                 System.out.println("User: " + cliUsername + "registed successfully");
+                                send2GRDS(new Serv2GrdsDBup(Notification.USER_LOGIN));
                             } else {
                                 oos.writeObject(false);
-                                System.out.println("User failed regist...");
+                                System.out.println("User failed registed...");
                             }
                         } catch (SQLException e) {
                             System.err.println("Error while registering a new user...");
@@ -96,6 +129,7 @@ public class ThreadClient extends Thread {
                                 db.updateState(cliUsername, true);
                                 oos.writeObject(true);
                                 System.out.println("User: " + cliUsername + " logged successfully");
+                                send2GRDS(new Serv2GrdsDBup(Notification.USER_LOGIN));
                             } else {
                                 oos.writeObject(false);
                                 System.out.println("User failed login...");
@@ -108,7 +142,7 @@ public class ThreadClient extends Thread {
                     }
                     case EDIT_USER -> {
                         Cli2ServChgProf profData = (Cli2ServChgProf) cliMessage;
-                        boolean checkNull=false ;
+                        boolean checkNull = false;
                         try {
                             switch (profData.getEditReq()) {
                                 case EDIT_NAME -> {
@@ -121,10 +155,11 @@ public class ThreadClient extends Thread {
                                     checkNull = db.editUsername(profData.getNewUsername(), profData.getOldUsername(), profData.getOldPassword());
                                 }
                             }
-                            if(checkNull){
+                            if (checkNull) {
                                 oos.writeObject(true);
                                 System.out.println("Edit successfully...");
-                            } else{
+                                send2GRDS(new Serv2GrdsDBup(Notification.EDIT_USER));
+                            } else {
                                 oos.writeObject(false);
                                 System.out.println("Edit failed...");
                             }
@@ -144,12 +179,13 @@ public class ThreadClient extends Thread {
                     case ADD_CONTACT -> {
                         Cli2ServAdd contact = (Cli2ServAdd) cliMessage;
 
-                        if (db.addContact(contact.getUsername(), contact.getAddUsername())){
+                        if (db.addContact(contact.getUsername(), contact.getAddUsername())) {
                             oos.writeObject(true);
+                            send2GRDS(new Serv2GrdsDBup(Notification.CONTACT_REQUEST, contact.getUsername()));
                             System.out.println("Invite from " + contact.getUsername() + " to " + contact.getAddUsername());
                         } else {
                             oos.writeObject(false);
-                            System.out.println("User failed login...");
+                            System.out.println("User failed add contact...");
                         }
                     }
                     case LIST_CONTACT -> {
@@ -160,34 +196,40 @@ public class ThreadClient extends Thread {
                     case DELETE_CONTACT -> {
                         Cli2ServDel deleContact = (Cli2ServDel) cliMessage;
 
-                        if(db.deleteContact(deleContact.getUsername(),deleContact.getUsernameDel())){
+                        if (db.deleteContact(deleContact.getUsername(), deleContact.getUsernameDel())) {
                             oos.writeObject(true);
+                            send2GRDS(new Serv2GrdsDBup(Notification.CONTACT_DELETE, deleContact.getUsername()));
                             System.out.println("Invite from " + deleContact.getUsername() + " to " + deleContact.getUsernameDel());
                         } else {
                             oos.writeObject(false);
-                            System.out.println("User failed login...");
+                            System.out.println("User failed delete contact...");
                         }
                     }
                     case CREATE_GROUP -> {
                         Cli2ServCreatGroup creatGroup = (Cli2ServCreatGroup) cliMessage;
-                        if(db.createGroup(creatGroup.getUsername(),creatGroup.getGroupName()))
-                            oos.writeObject(true);
-                         else
-                             oos.writeObject(false);
+                        oos.writeObject(db.createGroup(creatGroup.getUsername(), creatGroup.getGroupName()));
                     }
                     case JOIN_GROUP -> {
                         Cli2ServInvGroup cli2ServInvGroup = (Cli2ServInvGroup) cliMessage;
-                        if(db.joinGroup(cliUsername,cli2ServInvGroup.getNameGroup()))
+                        if (db.joinGroup(cliUsername, cli2ServInvGroup.getGroupID())) {
                             oos.writeObject(true);
-                        else
-                            oos.writeObject(false);
-
+                            send2GRDS(new Serv2GrdsDBup(Notification.JOIN_GROUP_REQUEST)); // TODO ir buscar username do admin do grupo
+                        } else oos.writeObject(false);
                     }
                     case LIST_GROUPS -> {
+                        Cli2ServListGroup cli2ServListGroup = (Cli2ServListGroup) cliMessage;
+                        ArrayList<String> info = db.listGroups();
+                        oos.writeObject(info);
                     }
                     case EDIT_GROUP -> {
                     }
                     case LEAVE_GROUP -> {
+                        Cli2ServLeavGroup cli2ServLeavGroup = (Cli2ServLeavGroup) cliMessage;
+
+                        if (db.leaveGroup(cliUsername, cli2ServLeavGroup.getIdGroup())) {
+                            oos.writeObject(true);
+                            send2GRDS(new Serv2GrdsDBup(Notification.LEAVE_GROUP)); // TODO ir buscar username do admin do grupo
+                        } else oos.writeObject(false);
                     }
                     case LIST_REQUESTS -> {
                         Cli2ServPendContact pendContact = (Cli2ServPendContact) cliMessage;
@@ -195,6 +237,34 @@ public class ThreadClient extends Thread {
                         oos.writeObject(info);
                     }
                     case SEND_MESSAGE -> {
+                        //TODO: ...
+                        // Se sucesso
+//                        send2GRDS(new Serv2GrdsDBup(Serv2GrdsDBup.typeUpdate.MESSAGE), username);
+                    }
+                    case ADMIN_GROUP -> {
+                        Cli2ServAdminGroup cli2ServAdminGroup = (Cli2ServAdminGroup) cliMessage;
+
+                        /* If the user requesting is the group admin advance else return unsucessful */
+                        if (db.getGroupAdminBool(cli2ServAdminGroup.getIdGroup(), cli2ServAdminGroup.getUsername())) {
+                            switch (cli2ServAdminGroup.getTypeEdit()) {
+                                case EDIT_NAME -> {
+
+                                }
+                                case DELETE_MEMBER -> {
+                                    //TODO: ...
+                                    // Se sucesso
+//                                send2GRDS(new Serv2GrdsDBup(Notification.LEAVE_GROUP), db.getGroupAdminUsername()); // TODO ir buscar username do admin do grupo
+                                }
+                                case DELETE_GROUP -> {
+                                    //TODO: DB Apagar users do grupo
+
+                                    // Se sucesso
+                                    //  send2GRDS(new Serv2GrdsDBup(Notification.GROUP_DELETE), db.getGroupUsers(cli2ServAdminGroup.getIdGroup())); // TODO ir buscar username de todos elementos do grupo
+                                }
+                            }
+                        }
+                        else
+                            oos.writeObject(false);
                     }
                     case EXIT -> {
                         Cli2ServExit cli2ServExit = (Cli2ServExit) cliMessage;
@@ -207,23 +277,21 @@ public class ThreadClient extends Thread {
                         } catch (SQLException e) {
                             System.err.println("Error while login...");
                         }
-                        // TODO: Informar GRDS que este servidor tem menos um cliente
                     }
                     case TCP_PORT -> {
                         Cli2ServTCPport cli2ServTCPport = (Cli2ServTCPport) cliMessage;
-                        socketSend2Cli = new Socket(InetAddress.getLocalHost().getHostAddress(),cli2ServTCPport.getPort());
+                        socketSend2Cli = new Socket(InetAddress.getLocalHost().getHostAddress(), cli2ServTCPport.getPort());
                         os2Cli = socketSend2Cli.getOutputStream();
                         oos2Cli = new ObjectOutputStream(os2Cli);
                     }
                 }
                 lastTimeOn = Calendar.getInstance().getTimeInMillis();
                 if (cliMessage.getRequestType() != Cli2Serv.RequestType.EXIT)
-                    db.updateState(cliUsername,true);
+                    db.updateState(cliUsername, true);
 
                 /* Send via udp to the group saying that there were changes */
 
-            }
-            catch (SocketException e) {
+            } catch (SocketException e) {
                 if (!exit) {
                     try {
                         db.updateState(cliUsername, false);
@@ -234,12 +302,33 @@ public class ThreadClient extends Thread {
                     setExit(true);
                     break;
                 }
-            }
-            catch (IOException | ClassNotFoundException e) {
+            } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             } catch (SQLException exception) {
                 exception.printStackTrace();
             }
+        }
+
+        // Enviar  via UDP ao grds que o cliente saiu
+        DatagramSocket ds = null;
+        try {
+            ds = new DatagramSocket();
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream out = new ObjectOutputStream(baos);
+            Serv2Grds serv2Grds = new Serv2Grds(Serv2Grds.Request.REMOVE_CLIENT, servID());
+            out.writeObject(serv2Grds);
+            out.flush();
+
+            byte[] req = baos.toByteArray();
+
+            DatagramPacket reqSend = new DatagramPacket(req, req.length, InetAddress.getByName(grdsIp), grdsPort);
+            ds.send(reqSend);
+
+        } catch (SocketException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         try {

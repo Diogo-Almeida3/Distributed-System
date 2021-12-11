@@ -28,7 +28,7 @@ public class Server {
     */
     public Server(String[] args) throws SQLException {
         int tries = 0;
-        Thread threadPing;
+        ThreadPing threadPing;
         try {
             socketReceiveConnections = new ServerSocket(0);
         } catch (IOException e) {
@@ -111,8 +111,7 @@ public class Server {
         ThreadGrds threadGrds = new ThreadGrds(clients);
         threadGrds.start();
 
-        //todo apagar clientes que saem
-        ThreadAcceptCli threadAcceptCli =  new ThreadAcceptCli(socketReceiveConnections,db,clients);
+        ThreadAcceptCli threadAcceptCli =  new ThreadAcceptCli(socketReceiveConnections,db,clients,grdsIp,grdsPort, threadPing);
         threadAcceptCli.run();
 
         synchronized (threadActivityClient) {

@@ -1,18 +1,25 @@
 package data.serv2cli;
 
-public class Serv2Cli {
+import Constants.Notification;
 
-    private Request request = null;
+import java.io.Serializable;
+import java.util.ArrayList;
 
-    public Serv2Cli(Request request){
-        this.request = request;
+public class Serv2Cli implements Serializable {
+
+    private Notification notification = null;
+    private ArrayList<String> users = new ArrayList<>();
+
+    public Serv2Cli(Notification request){
+        this.notification = request;
     }
 
-    public Request getRequest() {
-        return request;
+    public void addUsers(String ... users2add) {
+        for (String user : users2add)
+            users.add(user);
     }
 
-    public enum Request {
-        NOTIFICATION_MESSAGE,NOTIFICATION_FILE
+    public Notification getNotification() {
+        return notification;
     }
 }

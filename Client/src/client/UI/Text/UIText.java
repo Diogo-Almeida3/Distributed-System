@@ -19,7 +19,7 @@ public class UIText {
         while(!exit){
             switch ( Utils.askOption("Edit Profile", "Send Messages", "Contact List","Search user",
                     "Pending contact requests","Add Contact",
-                    "Delete Contact","Create Group","Invite for Group","Exit")){
+                    "Delete Contact","Create Group","Join group","List Groups","Leave Group","Manage Group","Exit")){
                 case 0 -> {
                     logic.exitServer();
                     exit = true;
@@ -42,6 +42,12 @@ public class UIText {
                         createGroup();
                 case 9->
                         joinGroup();
+                case 10 ->
+                        listGroups();
+                case 11 ->
+                        leaveGroup();
+                case 12 ->
+                        adminGroup();
             }
         }
 
@@ -164,9 +170,44 @@ public class UIText {
 
     }
     private void joinGroup() {
-        if (logic.joinGroup(Utils.askString("Name of group: ")))
+        if (logic.joinGroup(Utils.askInt("Id of the group: ")))
             System.out.println("Successful sending request to join the group");
         else
             System.out.println("Failure to submit request to join the group");
     }
-}
+
+    private void listGroups() {
+        String list = logic.listGroups();
+        if(list != null)
+            System.out.println(list);
+        else
+            System.out.println("There are no groups registered.");
+    }
+
+    private void leaveGroup() {
+        if(logic.leaveGroup(Utils.askInt("Id for leave the group: ")))
+            System.out.println("Successfully exited the group");
+        else
+            System.out.println("Failed to leave the group");
+
+    }
+
+    private void adminGroup() {
+        switch(Utils.askOption("Rename the group name","Delete group member","Extinguish the group","Exit")){
+            case 0->{}
+
+            case 1->{
+                if(logic.renameGroup(Utils.askInt("Enter the id group:"),Utils.askString("Enter a new name for group:")))
+                    System.out.println("Successfully rename group name");
+                else
+                    System.out.println("Failed to rename group name");
+            }
+            case 2->{
+
+            }
+            case 3->{
+
+            }
+            }
+        }
+    }

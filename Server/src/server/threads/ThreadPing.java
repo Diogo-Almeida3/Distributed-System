@@ -1,7 +1,7 @@
 package server.threads;
 
 
-import data.Serv2Grds;
+import data.serv2grds.Serv2Grds;
 
 import java.io.*;
 import java.net.*;
@@ -18,6 +18,10 @@ public class ThreadPing extends Thread {
         this.grdsIp = grdsIp;
         this.grdsPort = grdsPort;
         this.socketReceiveConnections = socketReceiveConnections;
+    }
+
+    public int getIdServ() {
+        return id;
     }
 
     @Override
