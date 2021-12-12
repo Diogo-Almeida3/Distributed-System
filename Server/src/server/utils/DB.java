@@ -54,10 +54,9 @@ public class DB {
         return true;
     }
 
-    public boolean editName(String newName, String username) throws SQLException {
-        Statement statement = null;
+    public boolean editName(String newName, String username) {
         try {
-            statement = dbConn.createStatement();
+            Statement statement = dbConn.createStatement();
             String sqlQueryExist = "UPDATE Utilizador SET nome = '" + newName + "' WHERE username like '" + username + "'";
             statement.executeUpdate(sqlQueryExist);
         } catch (SQLException e) {
@@ -179,11 +178,11 @@ public class DB {
 
             ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
             boolean aux = resultSet.next();
-            if(!aux){
+            if (!aux) {
                 String sqlQueryRegist = "INSERT INTO Utilizador_has_Utilizador VALUES ('" + username.toLowerCase() + "','" + addUsername.toLowerCase() + "',true)";
                 statement.executeUpdate(sqlQueryRegist);
-            } else{
-                String sqlQuery = "UPDATE Utilizador_has_Utilizador SET isPendenteContacto= '"+ false +"' WHERE Utilizador_username like '" + username + "' AND Utilizador_username1 like '" + addUsername + "' OR Utilizador_username like '" + addUsername + "' AND Utilizador_username1 like '" + username + "'";
+            } else {
+                String sqlQuery = "UPDATE Utilizador_has_Utilizador SET isPendenteContacto= '" + false + "' WHERE Utilizador_username like '" + username + "' AND Utilizador_username1 like '" + addUsername + "' OR Utilizador_username like '" + addUsername + "' AND Utilizador_username1 like '" + username + "'";
                 statement.executeUpdate(sqlQuery);
             }
             statement.close();
@@ -194,26 +193,22 @@ public class DB {
         return success;
     }
 
-    public boolean deleteContact(String username, String usernameDel) throws SQLException {
-        //Apaga as mensagens
-        boolean success = false;
-        Statement statement = dbConn.createStatement();
-        Statement statement1 = dbConn.createStatement();
-
-        String sqlQueryDeleteContact = "DELETE FROM Utilizador_has_Utilizador WHERE Utilizador_username LIKE '" + username + "' AND Utilizador_username1 like '" + usernameDel + "'";
-        String sqlQueryDeleteMessages = "DELETE FROM Mensagem WHERE Utilizador_username LIKE '" + username + "' AND Utilizador_username1 LIKE '" + usernameDel + "' AND Grupo_id='0'";
-
+    public boolean deleteContact(String username, String usernameDel) {
         try {
+            Statement statement = dbConn.createStatement();
+            Statement statement1 = dbConn.createStatement();
+
+            String sqlQueryDeleteContact = "DELETE FROM Utilizador_has_Utilizador WHERE Utilizador_username LIKE '" + username + "' AND Utilizador_username1 like '" + usernameDel + "'";
+            String sqlQueryDeleteMessages = "DELETE FROM Mensagem WHERE Utilizador_username LIKE '" + username + "' AND Utilizador_username1 LIKE '" + usernameDel + "' AND Grupo_id='0'";
             statement.executeUpdate(sqlQueryDeleteContact);
             statement1.executeUpdate(sqlQueryDeleteMessages);
 
-            success = true;
-        } catch (SQLException e) {
-            success = false;
-        }
 
-        statement.close();
-        return success;
+            statement.close();
+        } catch (SQLException e) {
+            return false;
+        }
+        return true;
     }
 
     public ArrayList<String> listPendingContacts(String username) {
@@ -222,7 +217,7 @@ public class DB {
         try {
             statement = dbConn.createStatement();
             String sqlQuery = "SELECT Utilizador_username1 FROM Utilizador_has_Utilizador";
-            sqlQuery += " WHERE Utilizador_username like '" + username + "' and isPendenteContacto=true";
+            sqlQuery += " WHERE Utilizador_username like '" + username + "' and isPendenteContacto= " + false;
 
             ResultSet resultSet = statement.executeQuery(sqlQuery);
             while (resultSet.next()) {
@@ -238,51 +233,57 @@ public class DB {
         return userInfo;
     }
 
-    public boolean createGroup(String username, String groupName) throws SQLException {
+    public boolean createGroup(String username, String groupName){
         boolean success = false;
-        Statement statement = dbConn.createStatement();
-        Statement statement1 = dbConn.createStatement();
+        try {
 
-        String sqlQueryCheck = "SELECT * FROM Grupo WHERE nome like '" + groupName.toLowerCase() + "' AND Utilizador_username like '" + username + "'";
 
-        ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
-        boolean aux = resultSet.next();
-        if (!aux) {
-            java.sql.Timestamp date = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
-            String sqlQueryRegist = "INSERT INTO Grupo (nome,data_criacao,Utilizador_username) VALUES ('" + groupName.toLowerCase() + "','" + date + "','" + username + "')";
+            Statement statement = dbConn.createStatement();
+            Statement statement1 = dbConn.createStatement();
 
-            try {
-                statement.executeUpdate(sqlQueryRegist);
-                success = true;
-            } catch (SQLException e) {
-                success = false;
-            }
-            if (success) {
-                String sqlQuery = "SELECT id FROM Grupo";
-                if (username != null)
-                    sqlQuery += " WHERE Utilizador_username like '" + username + "' and nome like '" + groupName + "'";
+            String sqlQueryCheck = "SELECT * FROM Grupo WHERE nome like '" + groupName.toLowerCase() + "' AND Utilizador_username like '" + username + "'";
 
-                ResultSet resultSetID = statement.executeQuery(sqlQuery);
-                while (resultSetID.next()) {
-                    String groupId = resultSetID.getString("id");
-                    String sqlQueryID = "INSERT INTO Grupo_has_Utilizador VALUES ('" + groupId + "','" + username + "',false)";
-                    try {
-                        statement1.executeUpdate(sqlQueryID);
-                        success = true;
-                    } catch (SQLException e) {
-                        Statement statement2 = dbConn.createStatement();
-                        String sqlQueryDelete = "DELETE FROM Grupo WHERE Utilizador_username LIKE '" + username + "' AND nome like '" + groupName + "'";
-                        statement2.executeQuery(sqlQueryDelete);
-                        success = false;
-                    }
+            ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
+            boolean aux = resultSet.next();
+            if (!aux) {
+                java.sql.Timestamp date = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
+                String sqlQueryRegist = "INSERT INTO Grupo (nome,data_criacao,Utilizador_username) VALUES ('" + groupName.toLowerCase() + "','" + date + "','" + username + "')";
+
+                try {
+                    statement.executeUpdate(sqlQueryRegist);
+                    success = true;
+                } catch (SQLException e) {
+                    success = false;
                 }
-                statement.close();
-                statement1.close();
-                return success;
-            }
+                if (success) {
+                    String sqlQuery = "SELECT id FROM Grupo";
+                    if (username != null)
+                        sqlQuery += " WHERE Utilizador_username like '" + username + "' and nome like '" + groupName + "'";
 
+                    ResultSet resultSetID = statement.executeQuery(sqlQuery);
+                    while (resultSetID.next()) {
+                        String groupId = resultSetID.getString("id");
+                        String sqlQueryID = "INSERT INTO Grupo_has_Utilizador VALUES ('" + groupId + "','" + username + "',false)";
+                        try {
+                            statement1.executeUpdate(sqlQueryID);
+                            success = true;
+                        } catch (SQLException e) {
+                            Statement statement2 = dbConn.createStatement();
+                            String sqlQueryDelete = "DELETE FROM Grupo WHERE Utilizador_username LIKE '" + username + "' AND nome like '" + groupName + "'";
+                            statement2.executeQuery(sqlQueryDelete);
+                            success = false;
+                        }
+                    }
+                    statement.close();
+                    statement1.close();
+                    return success;
+                }
+
+            }
+            statement.close();
+        } catch (SQLException ex) {
+            return false;
         }
-        statement.close();
         return false;
     }
 
@@ -329,7 +330,7 @@ public class DB {
 
                 groupInfo.add("Group ID: " + groupID + " -> [" + groupName + "] - Creator: " + creatorName + " - Creation date: " + data);
 
-                String sqlQueryGetUsers = "Select Utilizador_username FROM Grupo_has_Utilizador WHERE isPendenteGrupo=false AND Grupo_id like '" + groupID + "'";
+                String sqlQueryGetUsers = "Select Utilizador_username FROM Grupo_has_Utilizador WHERE isPendenteGrupo=" + false +" AND Grupo_id like '" + groupID + "'";
                 statement1 = dbConn.createStatement();
                 ResultSet resultSetUsers = statement1.executeQuery(sqlQueryGetUsers);
                 while (resultSetUsers.next()) {
@@ -407,10 +408,10 @@ public class DB {
     }
 
     public ArrayList<String> getGroupUsers(int groupId) {
-        ArrayList<String> groupUsers = null;
+          ArrayList<String> groupUsers = new ArrayList<>();
         try {
             Statement statement = dbConn.createStatement();
-            String sqlQuery = "SELECT Utilizador_username FROM Grupo_has_utilizador WHERE Grupo_id= '" + groupId + "' AND isPendenteGrupo='" + false + "'";
+            String sqlQuery = "SELECT Utilizador_username FROM Grupo_has_Utilizador WHERE Grupo_id= '" + groupId + "' AND isPendenteGrupo=" + false;
             ResultSet resultSet = statement.executeQuery(sqlQuery);
 
             while (resultSet.next()) {
@@ -423,6 +424,110 @@ public class DB {
     }
 
     public boolean editGroupName(int groupId, String groupName) {
+        try {
+            Statement statement = dbConn.createStatement();
+            String sqlQueryExist = "UPDATE Grupo SET nome = '" + groupName.toLowerCase() + "' WHERE id= '" + groupId + "'";
+            statement.executeUpdate(sqlQueryExist);
+        } catch (SQLException e) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean deleteGroup(int groupId) {
+        try {Statement statement = dbConn.createStatement();
+            Statement statement1 = dbConn.createStatement();
+            Statement statement2 = dbConn.createStatement();
+
+
+            String sqlQueryDeleteGroup = "DELETE FROM Grupo WHERE id= '" + groupId + "'";
+            String sqlQueryDeleteGroupUsers = "DELETE FROM Grupo_has_Utilizador WHERE Grupo_id= '" + groupId + "'";
+            String sqlQueryDeleteGroupMessages = "DELETE FROM Mensagem WHERE Grupo_id= '" + groupId + "'";
+
+
+            statement1.executeUpdate(sqlQueryDeleteGroupUsers);
+            statement2.executeUpdate(sqlQueryDeleteGroupMessages);
+            statement.executeUpdate(sqlQueryDeleteGroup);
+
+            statement.close();
+            statement1.close();
+            statement2.close();
+        } catch (SQLException e) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean kickGroupMember(int groupId, String username) {
+        try {
+            Statement statement = dbConn.createStatement();
+            Statement statement1 = dbConn.createStatement();
+
+            String sqlQueryUser = "DELETE FROM Grupo_has_Utilizador WHERE Grupo_id LIKE '" + groupId + "' AND Utilizador_username LIKE '" + username + "'";
+            String sqlQueryUserMessages = "DELETE FROM Mensagem WHERE Grupo_id LIKE '" + groupId + "' AND Utilizador_username LIKE '" + username + "'";
+
+
+            statement.executeUpdate(sqlQueryUser);
+            statement1.executeUpdate(sqlQueryUserMessages);
+        } catch (SQLException e) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean acceptMember(int groupId,String username){
+        try{
+            Statement statement = dbConn.createStatement();
+
+            String sqlQueryCheck = "SELECT * FROM Grupo_has_Utilizador WHERE Utilizador_username like '" + username.toLowerCase() + "' AND Grupo_id like '" + groupId + "' AND isPendenteGrupo="+true;
+
+            ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
+            boolean aux = resultSet.next();
+            if(aux){
+                String sqlQueryUpdate = "UPDATE Grupo_has_Utilizador SET isPendenteGrupo=false WHERE Utilizador_username like '" + username + "' AND Grupo_id= '" + groupId + "'";
+                statement.executeUpdate(sqlQueryUpdate);
+                return true;
+            }
+        }catch(SQLException e){
+            return false;
+        }
+        return false;
+    }
+
+    public ArrayList<String> listGroupWaitingList(int groupId){
+        ArrayList<String> groupWaitingList = new ArrayList<>();
+        try {
+            Statement statement = dbConn.createStatement();
+            String sqlQuery = "SELECT Utilizador_username FROM Grupo_has_Utilizador WHERE Grupo_id= '" + groupId + "' AND isPendenteGrupo=" + true;
+            ResultSet resultSet = statement.executeQuery(sqlQuery);
+
+            while (resultSet.next()) {
+                groupWaitingList.add(resultSet.getString("Utilizador_username"));
+            }
+        } catch (SQLException e) {
+            return null;
+        }
+        return groupWaitingList;
+    }
+
+    public boolean sendMessageTo(String sender, String receiver, String message) {
+        try{
+            Statement statement = dbConn.createStatement();
+
+            String sqlQueryCheck = "SELECT * FROM Utilizador_has_Utilizador" +
+                    " WHERE isPendenteContacto = FALSE AND " +
+                    "(Utilizador_username = "+sender+" AND Utilizador_username1 = "+receiver+" OR Utilizador_username = "+receiver+" AND Utilizador_username1 = "+sender+")";
+
+            ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
+            boolean isContact = resultSet.next();
+            if(isContact) {
+                String sqlQueryUpdate = "";
+                statement.executeUpdate(sqlQueryUpdate);
+                return true;
+            }
+        }catch(SQLException e){
+            return false;
+        }
         return false;
     }
 }

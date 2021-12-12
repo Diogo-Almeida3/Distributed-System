@@ -1,11 +1,14 @@
 package data.cli2serv;
 
+import java.util.Locale;
+
 public class Cli2ServAdminGroup extends Cli2Serv {
     private int idGroup;
     private String nameNewGroup =null;
     private typeEdit type = null;
     private String userKick = null;
     private String username = null;
+    private String acceptUser = null;
 
     /* Rename the group | Kick User */
     public Cli2ServAdminGroup(int idGroup,String username,typeEdit editType,String name) {
@@ -14,9 +17,11 @@ public class Cli2ServAdminGroup extends Cli2Serv {
         this.type = editType;
         if(type == typeEdit.EDIT_NAME)
             nameNewGroup = name;
-        else
-            userKick = null;
-        this.username = username;
+        else if(type == typeEdit.DELETE_MEMBER)
+            userKick = name;
+        else if(type == typeEdit.ACCEPT_MEMBER)
+            acceptUser=name;
+        this.username = username.toLowerCase();
     }
 
     /* Delete Group*/
@@ -24,7 +29,7 @@ public class Cli2ServAdminGroup extends Cli2Serv {
         super(RequestType.ADMIN_GROUP);
         this.idGroup = idGroup;
         this.type = editType;
-        this.username = username;
+        this.username = username.toLowerCase();
     }
 
     public String getUsername(){
@@ -47,7 +52,7 @@ public class Cli2ServAdminGroup extends Cli2Serv {
         return type;
     }
 
-    public enum typeEdit{EDIT_NAME, DELETE_MEMBER, DELETE_GROUP}
+    public enum typeEdit{EDIT_NAME, DELETE_MEMBER, DELETE_GROUP,ACCEPT_MEMBER,WAITING_MEMBERS}
 
-
+    public String getAcceptUser() {return acceptUser;}
 }

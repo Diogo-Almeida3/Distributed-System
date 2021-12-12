@@ -3,6 +3,7 @@ package data.serv2grds;
 import Constants.Notification;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class Serv2GrdsDBup extends Serv2Grds {
     private ArrayList<String> users = new ArrayList<>();
@@ -17,13 +18,22 @@ public class Serv2GrdsDBup extends Serv2Grds {
 
     public Serv2GrdsDBup(Notification type, String ... users2add) {
         super(Request.BD_UPDATE);
-        addUsers(users2add);
+        if (users2add != null)
+            addUsers(users2add);
+        this.type = type;
+    }
+
+    public Serv2GrdsDBup(Notification type, Collection<String> groupUsers) {
+        super(Request.BD_UPDATE);
+        if (groupUsers != null)
+            users.addAll(groupUsers);
         this.type = type;
     }
 
     public Serv2GrdsDBup(Notification type, String serverIp, int serverPort, String ... users2add) {
         super(Request.BD_UPDATE);
-        addUsers(users2add);
+        if (users2add != null)
+            addUsers(users2add);
         this.ServerIp = serverIp;
         this.ServerPort = serverPort;
         this.type = type;

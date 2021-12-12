@@ -163,17 +163,18 @@ public class UIText {
 
     private void createGroup(){
 
-        if(logic.createGroup(Utils.askString("Enter a name of a group:")))
+        if(logic.createGroup(Utils.askString("Enter a name of a group: ")))
             System.out.println("Group created with success");
         else
             System.out.println("Error creating group...");
 
     }
     private void joinGroup() {
-        if (logic.joinGroup(Utils.askInt("Id of the group: ")))
-            System.out.println("Successful sending request to join the group");
+        int id = Utils.askInt("Id of the group: ");
+        if (logic.joinGroup(id))
+            System.out.println("Successful sending request to join the group " + id);
         else
-            System.out.println("Failure to submit request to join the group");
+            System.out.println("Failure to submit request to join the group " + id);
     }
 
     private void listGroups() {
@@ -185,28 +186,54 @@ public class UIText {
     }
 
     private void leaveGroup() {
-        if(logic.leaveGroup(Utils.askInt("Id for leave the group: ")))
-            System.out.println("Successfully exited the group");
+        int id = Utils.askInt("Id for leave the group: ");
+        if(logic.leaveGroup(id))
+            System.out.println("Successfully exited the group " + id);
         else
-            System.out.println("Failed to leave the group");
+            System.out.println("Failed to leave the group " + id);
 
     }
 
     private void adminGroup() {
-        switch(Utils.askOption("Rename the group name","Delete group member","Extinguish the group","Exit")){
+        String name =null;
+        switch(Utils.askOption("Rename group","Accept group member","Delete group member","Delete group","List waiting members","Exit")){
             case 0->{}
-
             case 1->{
                 if(logic.renameGroup(Utils.askInt("Enter the id group:"),Utils.askString("Enter a new name for group:")))
                     System.out.println("Successfully rename group name");
                 else
                     System.out.println("Failed to rename group name");
             }
+
             case 2->{
+                name = Utils.askString("Enter the username of the member to add: ");
+                if(logic.acceptanceGroupMember(Utils.askInt("Enter the id group: "),name))
+                    System.out.println("Sucessfully add member with name " +name);
+                else
+                    System.out.println("Failed to add member with name " + name);
 
             }
             case 3->{
+                name =Utils.askString("Enter the username of the member to be deleted: ");
+                if(logic.deleteGroupMember(Utils.askInt("Enter the id group: "),name))
+                    System.out.println("Sucessfully remove member with name " +name);
+                else
+                    System.out.println("Failed to remove member with name "+name);
+            }
+            case 4->{
+                int id = Utils.askInt("Enter the id group to delete: ");
+                if(logic.deleteGroup(id))
+                    System.out.println("Sucessfully remove group with id "+id);
+                else
+                    System.out.println("Failed to delete group with id "+id);
+            }
 
+            case 5->{
+                String list = logic.listWaitingMembers(Utils.askInt("Enter the id group to list:"));
+                if(list != null)
+                    System.out.println(list);
+                else
+                    System.out.println("There are no members waiting");
             }
             }
         }

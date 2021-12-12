@@ -7,8 +7,10 @@ import data.serv2cli.Serv2Cli;
 import data.serv2grds.Serv2GrdsDBup;
 import server.utils.DB;
 
+import javax.swing.*;
 import java.io.*;
 import java.net.*;
+import java.sql.Array;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -181,7 +183,7 @@ public class ThreadClient extends Thread {
 
                         if (db.addContact(contact.getUsername(), contact.getAddUsername())) {
                             oos.writeObject(true);
-                            send2GRDS(new Serv2GrdsDBup(Notification.CONTACT_REQUEST, contact.getUsername()));
+                            send2GRDS(new Serv2GrdsDBup(Notification.CONTACT_REQUEST,contact.getAddUsername()));
                             System.out.println("Invite from " + contact.getUsername() + " to " + contact.getAddUsername());
                         } else {
                             oos.writeObject(false);
@@ -198,7 +200,7 @@ public class ThreadClient extends Thread {
 
                         if (db.deleteContact(deleContact.getUsername(), deleContact.getUsernameDel())) {
                             oos.writeObject(true);
-                            send2GRDS(new Serv2GrdsDBup(Notification.CONTACT_DELETE, deleContact.getUsername()));
+                            send2GRDS(new Serv2GrdsDBup(Notification.CONTACT_DELETE, deleContact.getUsernameDel()));
                             System.out.println("Invite from " + deleContact.getUsername() + " to " + deleContact.getUsernameDel());
                         } else {
                             oos.writeObject(false);
@@ -213,7 +215,8 @@ public class ThreadClient extends Thread {
                         Cli2ServInvGroup cli2ServInvGroup = (Cli2ServInvGroup) cliMessage;
                         if (db.joinGroup(cliUsername, cli2ServInvGroup.getGroupID())) {
                             oos.writeObject(true);
-                            send2GRDS(new Serv2GrdsDBup(Notification.JOIN_GROUP_REQUEST)); // TODO ir buscar username do admin do grupo
+                            String adminName = db.getGroupAdminUsername(cli2ServInvGroup.getGroupID());
+                            send2GRDS(new Serv2GrdsDBup(Notification.JOIN_GROUP_REQUEST, adminName));
                         } else oos.writeObject(false);
                     }
                     case LIST_GROUPS -> {
@@ -228,7 +231,8 @@ public class ThreadClient extends Thread {
 
                         if (db.leaveGroup(cliUsername, cli2ServLeavGroup.getIdGroup())) {
                             oos.writeObject(true);
-                            send2GRDS(new Serv2GrdsDBup(Notification.LEAVE_GROUP)); // TODO ir buscar username do admin do grupo
+                            String adminName = db.getGroupAdminUsername(cli2ServLeavGroup.getIdGroup());
+                            send2GRDS(new Serv2GrdsDBup(Notification.LEAVE_GROUP,adminName));
                         } else oos.writeObject(false);
                     }
                     case LIST_REQUESTS -> {
@@ -247,19 +251,45 @@ public class ThreadClient extends Thread {
                         /* If the user requesting is the group admin advance else return unsucessful */
                         if (db.getGroupAdminBool(cli2ServAdminGroup.getIdGroup(), cli2ServAdminGroup.getUsername())) {
                             switch (cli2ServAdminGroup.getTypeEdit()) {
-                                case EDIT_NAME -> {
+                                case EDIT_NAME-> {
+                                    if(db.editGroupName(cli2ServAdminGroup.getIdGroup(),cli2ServAdminGroup.getNameNewGroup())) {
+                                        //send2GRDS(new Serv2GrdsDBup(Notification.RENAME_GROUP, ));
+                                        oos.writeObject(true);
+                                    }
+                                    else
+                                        oos.writeObject(false);
 
                                 }
                                 case DELETE_MEMBER -> {
                                     //TODO: ...
-                                    // Se sucesso
-//                                send2GRDS(new Serv2GrdsDBup(Notification.LEAVE_GROUP), db.getGroupAdminUsername()); // TODO ir buscar username do admin do grupo
+                                    if(db.kickGroupMember(cli2ServAdminGroup.getIdGroup(),cli2ServAdminGroup.getUserKick())) {
+                                        send2GRDS(new Serv2GrdsDBup(Notification.LEAVE_GROUP, db.getGroupAdminUsername(cli2ServAdminGroup.getIdGroup())));
+                                        oos.writeObject(true);
+                                    }
+                                    else
+                                        oos.writeObject(false);
+                                }
+                                case ACCEPT_MEMBER -> {
+                                    if(db.acceptMember(cli2ServAdminGroup.getIdGroup(),cli2ServAdminGroup.getAcceptUser())){
+                                        //send2GRDS(new Serv2GrdsDBup());
+                                        oos.writeObject(true);
+                                    }
+                                    else
+                                        oos.writeObject(false);
                                 }
                                 case DELETE_GROUP -> {
-                                    //TODO: DB Apagar users do grupo
+                                    ArrayList<String> tempUsers2Notify = db.getGroupUsers(cli2ServAdminGroup.getIdGroup());
+                                    if(db.deleteGroup(cli2ServAdminGroup.getIdGroup())) {
+                                        send2GRDS(new Serv2GrdsDBup(Notification.GROUP_DELETE, tempUsers2Notify));
+                                        oos.writeObject(true);
+                                    }
+                                    else
+                                        oos.writeObject(false);
+                                }
+                                case WAITING_MEMBERS -> {
+                                    ArrayList<String> info = db.listGroupWaitingList(cli2ServAdminGroup.getIdGroup());
+                                    oos.writeObject(info);
 
-                                    // Se sucesso
-                                    //  send2GRDS(new Serv2GrdsDBup(Notification.GROUP_DELETE), db.getGroupUsers(cli2ServAdminGroup.getIdGroup())); // TODO ir buscar username de todos elementos do grupo
                                 }
                             }
                         }

@@ -339,7 +339,7 @@ public class Client {
     public boolean renameGroup(int idGroup, String nameNewGroup) {
         if (!isLogged) return false;
 
-        Cli2ServAdminGroup adminGroup = new Cli2ServAdminGroup(idGroup, nameNewGroup, Cli2ServAdminGroup.typeEdit.EDIT_NAME);
+        Cli2ServAdminGroup adminGroup = new Cli2ServAdminGroup(idGroup,username, Cli2ServAdminGroup.typeEdit.EDIT_NAME,nameNewGroup);
         boolean success = false;
         try {
             out2serv.writeObject(adminGroup);
@@ -349,5 +349,68 @@ public class Client {
         }
         return success;
 
+    }
+
+    public boolean deleteGroupMember(int idGroup, String nameMember){
+        if(!isLogged) return false;
+
+        Cli2ServAdminGroup adminGroup = new Cli2ServAdminGroup(idGroup,username,Cli2ServAdminGroup.typeEdit.DELETE_MEMBER,nameMember);
+        boolean sucess = false;
+        try{
+            out2serv.writeObject(adminGroup);
+            sucess = (boolean) inServ.readObject();
+        }catch (IOException | ClassNotFoundException e){
+            System.err.println("Error deleting member of group in communication with server!");
+        }
+        return sucess;
+    }
+
+    public boolean deleteGroup(int idGroup) {
+        if(!isLogged) return false;
+
+        Cli2ServAdminGroup adminGroup = new Cli2ServAdminGroup(idGroup,username,Cli2ServAdminGroup.typeEdit.DELETE_GROUP);
+        boolean sucess = false;
+        try{
+            out2serv.writeObject(adminGroup);
+            sucess = (boolean) inServ.readObject();
+        }catch (IOException | ClassNotFoundException e){
+            System.err.println("Error deleting group in communication with server!");
+        }
+        return sucess;
+    }
+
+    public boolean acceptanceGroupMember(int idGroup, String nameMember) {
+        if(!isLogged) return false;
+
+        Cli2ServAdminGroup adminGroup = new Cli2ServAdminGroup(idGroup,username,Cli2ServAdminGroup.typeEdit.ACCEPT_MEMBER,nameMember);
+        boolean sucess = false;
+        try{
+            out2serv.writeObject(adminGroup);
+            sucess = (boolean) inServ.readObject();
+        }catch (IOException | ClassNotFoundException e){
+            System.err.println("Error acceptance member of group in communication with server!");
+        }
+        return sucess;
+    }
+
+    public String listWaitingMembers(int idGroup) {
+        if (!isLogged) return null;
+
+        Cli2ServAdminGroup list = new Cli2ServAdminGroup(idGroup,username,Cli2ServAdminGroup.typeEdit.WAITING_MEMBERS);
+        ArrayList<String> members = null;
+        String infoGroups = null;
+        try {
+            String aux = "";
+            out2serv.writeObject(list);
+            members = (ArrayList<String>) inServ.readObject();
+            for (String info : members) {
+                aux += info + "\n";
+            }
+            if (!aux.equals(""))
+                infoGroups = aux;
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error listing groups in communication with server");
+        }
+        return infoGroups;
     }
 }
