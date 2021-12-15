@@ -9,10 +9,11 @@ public class ClientMain {
     public static void main(String[] args) {
         try{
             if(args.length == 2) {
-                Client logic = new Client(args);
+                UIText ui = new UIText();
+                Client logic = new Client(args,ui);
                 if(logic.getNoServer())
                     return;
-                UIText ui = new UIText(logic);
+                ui.setLogic(logic);
                 ui.run();
             }
             else

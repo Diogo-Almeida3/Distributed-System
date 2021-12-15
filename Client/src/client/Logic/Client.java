@@ -1,5 +1,6 @@
 package client.Logic;
 
+import client.UI.Text.UIClient;
 import data.Cli2Grds;
 import data.cli2serv.*;
 
@@ -22,14 +23,16 @@ public class Client {
     private boolean noServer = false;
     private boolean isLogged = false;
 
+    private UIClient ui;
 
     public String getUsername() {
         return username;
     }
 
-    public Client(String args[]) throws IOException {
+    public Client(String args[], UIClient ui) throws IOException {
         this.grdsIp = args[0];
         this.grdsPort = Integer.parseInt(args[1]);
+        this.ui = ui;
         ds = new DatagramSocket();
         connect2serv();
     }
@@ -91,7 +94,7 @@ public class Client {
             ds.close();
         }
 
-        threadServerTCP = new ThreadServerTCP(this);
+        threadServerTCP = new ThreadServerTCP(this,ui);
 
         Cli2ServTCPport TCPPort = new Cli2ServTCPport(threadServerTCP.getpPort());
         out2serv.writeObject(TCPPort);
@@ -172,38 +175,38 @@ public class Client {
         if (!isLogged) return null;
 
         Cli2ServSearch search = new Cli2ServSearch(username);
-        ArrayList<String> success = null;
+        ArrayList<String> receivedFromServer = null;
         String infoUsers = null;
         try {
-            String aux = "";
+            StringBuilder searchInfo = new StringBuilder();
             out2serv.writeObject(search);
-            success = (ArrayList<String>) inServ.readObject();
-            for (String info : success) {
-                aux += info + "\n";
+            receivedFromServer = (ArrayList<String>) inServ.readObject();
+            for (String info : receivedFromServer) {
+                searchInfo.append(info + "\n");
             }
-            if (!aux.equals(""))
-                infoUsers = aux;
+            if (!searchInfo.equals(""))
+                infoUsers = searchInfo.toString();
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error search username in communication with server");
         }
         return infoUsers;
     }
 
-    public String contactList(String username) {
+    public String contactList() {
         if (!isLogged) return null;
 
         Cli2ServListContacts listContacts = new Cli2ServListContacts(username);
-        ArrayList<String> success = null;
+        ArrayList<String> receivedFromServer = null;
         String infoUsers = null;
         try {
-            String aux = "";
+            StringBuilder contactsList = new StringBuilder();
             out2serv.writeObject(listContacts);
-            success = (ArrayList<String>) inServ.readObject();
-            for (String info : success) {
-                aux += info + "\n";
+            receivedFromServer = (ArrayList<String>) inServ.readObject();
+            for (String info : receivedFromServer) {
+                contactsList.append(info + "\n");
             }
-            if (!aux.equals(""))
-                infoUsers = aux;
+            if (!contactsList.isEmpty())
+                infoUsers = contactsList.toString();
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error listing contacts in communication with server");
         }
@@ -251,25 +254,24 @@ public class Client {
         return success;
     }
 
-    public String pendingContactList(String username) {
+    public String pendingContactList() {
         if (!isLogged) return null;
 
         Cli2ServPendContact listContacts = new Cli2ServPendContact(username);
-        ArrayList<String> success = null;
-        String list = null;
+        ArrayList<String> recivedFromServ = null;
         try {
-            String aux = "";
+            StringBuilder pendingContactListBuilder = new StringBuilder();
             out2serv.writeObject(listContacts);
-            success = (ArrayList<String>) inServ.readObject();
-            for (String info : success) {
-                aux += info + "\n";
+            recivedFromServ = (ArrayList<String>) inServ.readObject();
+            for (String name : recivedFromServ) {
+                pendingContactListBuilder.append(name + "\n");
             }
-            if (!aux.equals(""))
-                list = aux;
+            if (!pendingContactListBuilder.isEmpty())
+                return pendingContactListBuilder.toString();
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error listing pending contacts in communication with server");
         }
-        return list;
+        return null;
     }
 
     public boolean createGroup(String nameGroup) {
@@ -379,18 +381,32 @@ public class Client {
         return sucess;
     }
 
+    public boolean sendMessageTo(String receiver, String message) {
+        if(!isLogged) return false;
+
+        Cli2ServMsg send = new Cli2ServMsg(username,receiver,message);
+        boolean success = false;
+        try{
+            out2serv.writeObject(send);
+            success = (boolean) inServ.readObject();
+        }catch (IOException | ClassNotFoundException e){
+            System.err.println("Error on send message to "+receiver+" in communication with server!");
+        }
+        return success;
+    }
+
     public boolean acceptanceGroupMember(int idGroup, String nameMember) {
         if(!isLogged) return false;
 
         Cli2ServAdminGroup adminGroup = new Cli2ServAdminGroup(idGroup,username,Cli2ServAdminGroup.typeEdit.ACCEPT_MEMBER,nameMember);
-        boolean sucess = false;
+        boolean success = false;
         try{
             out2serv.writeObject(adminGroup);
-            sucess = (boolean) inServ.readObject();
+            success = (boolean) inServ.readObject();
         }catch (IOException | ClassNotFoundException e){
             System.err.println("Error acceptance member of group in communication with server!");
         }
-        return sucess;
+        return success;
     }
 
     public String listWaitingMembers(int idGroup) {
@@ -412,5 +428,27 @@ public class Client {
             System.err.println("Error listing groups in communication with server");
         }
         return infoGroups;
+    }
+
+    public ArrayList<String> getContactsWithMessages() {
+        Cli2ServGetMsg send = new Cli2ServGetMsg(username);
+        try {
+            out2serv.writeObject(send);
+            return (ArrayList<String>) inServ.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("An error occurred while trying to get the contacts with messages!");
+        }
+        return null;
+    }
+
+    public ArrayList<String> getMessagesFrom(String sender) {
+        Cli2ServGetMsg send = new Cli2ServGetMsg(sender,username);
+        try {
+            out2serv.writeObject(send);
+            return (ArrayList<String>) inServ.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("An error occurred while trying to get the messages from "+sender+"!");
+        }
+        return null;
     }
 }

@@ -1,5 +1,6 @@
 package client.Logic;
 
+import client.UI.Text.UIClient;
 import data.serv2cli.Serv2Cli;
 
 import java.io.*;
@@ -15,14 +16,14 @@ public class ThreadServerTCP extends Thread{
     private ObjectInputStream oisServ = null;
     private boolean exit=false;
     private Client logic;
+    private UIClient ui;
 
-    public ThreadServerTCP(Client logic){
-        try {
+    public ThreadServerTCP(Client logic, UIClient ui) throws IOException {
+            if (logic==null||ui==null)
+                throw new IllegalArgumentException();
             ss = new ServerSocket(0);
             this.logic = logic;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            this.ui = ui;
     }
 
     public void setExit(boolean exit) {
@@ -48,51 +49,7 @@ public class ThreadServerTCP extends Thread{
         while(!exit) {
             try {
                 serv2Cli = (Serv2Cli) oisServ.readObject();
-
-                switch (serv2Cli.getNotification()){
-                    case CONTACT_REQUEST -> {
-                        System.out.println("\nYou have a new contact request!");
-                    }
-                    case JOIN_GROUP_REQUEST -> {
-                        System.out.println("\nYou have a new request to join in your group!");
-                    }
-                    case CONTACT_REQ_RESPONSE -> {
-                        System.out.println("\nYou have a response to a contact request!");
-                    }
-                    case JOIN_GROUP_REQ_RESPONSE -> {
-                        System.out.println("\nYou have an answer to your request to join a group!");
-                    }
-                    case EDIT_USER -> {
-                        // Interface Gráfica Apenas
-                    }
-                    case MESSAGE -> {
-                        System.out.println("\nYou have a new message!");
-                    }
-                    case MESSAGE_DELETE -> {
-                        System.out.println("\nA message was deleted!");
-                    }
-                    case FILE -> {
-                        System.out.println("\nYou have a new file to transfer!");
-                    }
-                    case FILE_DELETE -> {
-                        System.out.println("\nOne file has been deleted!");
-                    }
-                    case USER_LOGIN -> {
-                        // Interface Gráfica Apenas
-                    }
-                    case USER_LEFT -> {
-                        // Interface Gráfica Apenas
-                    }
-                    case GROUP_DELETE -> {
-                        System.out.println("\nA group you were in was deleted!");
-                    }
-                    case CONTACT_DELETE -> {
-                        System.out.println("\nA contact of yours was deleted!");
-                    }
-                    case LEAVE_GROUP -> {
-                        System.out.println("\nOne user has left of your group!");
-                    }
-                }
+                ui.notification(serv2Cli.getNotification());
             } catch (SocketException e) {
                 if (!exit) {
                     logic.connect2serv();

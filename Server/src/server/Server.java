@@ -143,7 +143,7 @@ public class Server {
 //        DB db = null;
 //        try {
 //            db = new DB();
-//            db.deleteContact("dialmeida","jpbp");
+//            db.sendMessage("jpbp","lims","mensagem12346 654as dasda sdasd ad");
 //        } catch (SQLException e) {
 //            e.printStackTrace();
 //        }

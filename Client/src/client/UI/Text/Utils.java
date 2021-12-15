@@ -16,7 +16,6 @@ public class Utils {
 
     public static int askOption(String... options) {
         int option;
-        System.out.println("Menu: ");
         do {
             for (int i = 0; i < options.length-1; i++)
                 System.out.printf("%3d - %s\n",i+1,options[i]);
