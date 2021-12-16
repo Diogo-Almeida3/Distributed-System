@@ -34,21 +34,23 @@ public class Client {
         this.grdsPort = Integer.parseInt(args[1]);
         this.ui = ui;
         ds = new DatagramSocket();
-        connect2serv();
+        if(!connect2serv())
+            throw new ConnectException();
     }
 
     public boolean getNoServer() {
         return noServer;
     }
 
-    public void connect2serv() {
+    public boolean connect2serv() {
         try {
             inicialComsSend();
             inicialComsReceived();
         } catch (IOException e) {
             System.err.println("Error to connect to server");
-            return;
+            return false;
         }
+        return true;
     }
 
     public void inicialComsSend() throws IOException {
@@ -71,6 +73,7 @@ public class Client {
 
     public void inicialComsReceived() throws IOException {
         DatagramPacket dpReceived = new DatagramPacket(new byte[5000], 5000); // TODO: Diminuir tamanho do array
+        ds.setSoTimeout(15 * 1000 );
         ds.receive(dpReceived);
 
         if (dpReceived.getLength() == 0) {
@@ -239,6 +242,20 @@ public class Client {
         return success;
     }
 
+    public boolean refuseContact(String usernameRef) {
+        if (!isLogged) return false;
+        Cli2ServRefuse refContact = new Cli2ServRefuse(username,usernameRef);
+        boolean success = false;
+        try {
+            out2serv.writeObject(refContact);
+            success = (boolean) inServ.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error refuse an user in communication with server");
+        }
+        return success;
+
+    }
+
     public boolean deleteContact(String usernameDel) {
 
         if (!isLogged) return false;
@@ -395,6 +412,20 @@ public class Client {
         return success;
     }
 
+    public boolean sendMessageTo(int groupId, String message) {
+        if(!isLogged) return false;
+
+        Cli2ServMsg send = new Cli2ServMsg(username,groupId,message);
+        boolean success = false;
+        try{
+            out2serv.writeObject(send);
+            success = (boolean) inServ.readObject();
+        }catch (IOException | ClassNotFoundException e){
+            System.err.println("Error on send message to group "+groupId+" in communication with server!");
+        }
+        return success;
+    }
+
     public boolean acceptanceGroupMember(int idGroup, String nameMember) {
         if(!isLogged) return false;
 
@@ -408,6 +439,21 @@ public class Client {
         }
         return success;
     }
+    public boolean refuseGroupMember(int idGroup, String nameMember) {
+        if(!isLogged) return false;
+
+        Cli2ServAdminGroup adminGroup = new Cli2ServAdminGroup(idGroup,username,Cli2ServAdminGroup.typeEdit.REFUSE_MEMBER,nameMember);
+        boolean success = false;
+        try{
+            out2serv.writeObject(adminGroup);
+            success = (boolean) inServ.readObject();
+        }catch (IOException | ClassNotFoundException e){
+            System.err.println("Error acceptance member of group in communication with server!");
+        }
+        return success;
+    }
+
+
 
     public String listWaitingMembers(int idGroup) {
         if (!isLogged) return null;
@@ -431,7 +477,18 @@ public class Client {
     }
 
     public ArrayList<String> getContactsWithMessages() {
-        Cli2ServGetMsg send = new Cli2ServGetMsg(username);
+        Cli2ServGetMsg send = new Cli2ServGetMsg(username, Cli2ServGetMsg.typeRequest.GET_CONTACTS);
+        try {
+            out2serv.writeObject(send);
+            return (ArrayList<String>) inServ.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("An error occurred while trying to get the contacts with messages!");
+        }
+        return null;
+    }
+
+    public ArrayList<String> getGroupsWithMessages() {
+        Cli2ServGetMsg send = new Cli2ServGetMsg(username, Cli2ServGetMsg.typeRequest.GET_GROUPS);
         try {
             out2serv.writeObject(send);
             return (ArrayList<String>) inServ.readObject();
@@ -451,4 +508,18 @@ public class Client {
         }
         return null;
     }
+
+    public ArrayList<String> getMessagesFromGroup(int groupId) {
+        Cli2ServGetMsg send = new Cli2ServGetMsg(groupId,username);
+        try {
+            out2serv.writeObject(send);
+            return (ArrayList<String>) inServ.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("An error occurred while trying to get the messages from group "+groupId+"!");
+        }
+        return null;
+    }
+
+
+
 }

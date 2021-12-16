@@ -190,6 +190,18 @@ public class ThreadClient extends Thread {
                             System.out.println("User failed add contact...");
                         }
                     }
+                    case REFUSE_CONTACT ->{
+                        Cli2ServRefuse refuseContact =(Cli2ServRefuse) cliMessage;
+                        if(db.refuseContact(refuseContact.getUsername(),refuseContact.getRefuseUsername())){
+                            oos.writeObject(true);
+                            // todo:send notification to contact
+                            System.out.println("Refuse from " + refuseContact.getUsername() + " to " + refuseContact.getRefuseUsername());
+                        }
+                        else{
+                            oos.writeObject(false);
+                            System.out.println("User failed refuse contact...");
+                        }
+                    }
                     case LIST_CONTACT -> {
                         Cli2ServListContacts listContacts = (Cli2ServListContacts) cliMessage;
                         ArrayList<String> info = db.listContacts(listContacts.getUsername());
@@ -242,18 +254,32 @@ public class ThreadClient extends Thread {
                     }
                     case SEND_MESSAGE -> {
                         Cli2ServMsg message = (Cli2ServMsg) cliMessage;
-                        if(db.sendMessage(message.getSender(),message.getReceiver(),message.getMessage())) {
-                            oos.writeObject(true);
-                            send2GRDS(new Serv2GrdsDBup(Notification.MESSAGE, message.getReceiver()));
-                        } else oos.writeObject(false);
+                        boolean success;
+                        if (message.isSend2group()) // Send messages to one group
+                            success = db.sendMessage2Group(message.getSender(),message.getGroupID(),message.getMessage());
+                        else  // Send messages to one user
+                            success = db.sendMessage(message.getSender(),message.getReceiver(),message.getMessage());
 
+                        if(success) {
+                            oos.writeObject(true);
+                            if (message.isSend2group())
+                                send2GRDS(new Serv2GrdsDBup(Notification.MESSAGE, db.getGroupUsers(((Cli2ServMsg) cliMessage).getGroupID())));
+                            else
+                                send2GRDS(new Serv2GrdsDBup(Notification.MESSAGE, message.getReceiver()));
+                        } else oos.writeObject(false);
                     }
                     case GET_MESSAGES -> {
                         Cli2ServGetMsg request = (Cli2ServGetMsg) cliMessage;
-                        if (request.isGetContacts())
-                            oos.writeObject(db.listContactsWithMessages(request.getReceiver()));
-                        else
-                            oos.writeObject(db.getMessages(request.getSender(), request.getReceiver(),30));
+
+                        switch (request.getRequestInfo()) {
+                            case GET_CONTACTS -> oos.writeObject(db.listContactsWithMessages(request.getReceiver()));
+
+                            case GET_GROUPS -> oos.writeObject(db.listGroupsWithMessages(request.getReceiver()));
+
+                            case GET_MSG_FROM_USER ->  oos.writeObject(db.getMessages(request.getSender(), request.getReceiver(),30));
+
+                            case GET_MSG_FROM_GROUP -> oos.writeObject(db.getMessagesFromGroup(request.getGroupId(),30));
+                        }
                     }
                     case ADMIN_GROUP -> {
                         Cli2ServAdminGroup cli2ServAdminGroup = (Cli2ServAdminGroup) cliMessage;
@@ -272,7 +298,7 @@ public class ThreadClient extends Thread {
                                 }
                                 case DELETE_MEMBER -> {
                                     if(db.kickGroupMember(cli2ServAdminGroup.getIdGroup(),cli2ServAdminGroup.getUserKick())) {
-                                        send2GRDS(new Serv2GrdsDBup(Notification.LEAVE_GROUP, db.getGroupAdminUsername(cli2ServAdminGroup.getIdGroup())));
+                                        send2GRDS(new Serv2GrdsDBup(Notification.LEAVE_GROUP, cli2ServAdminGroup.getUserKick()));
                                         oos.writeObject(true);
                                     }
                                     else
@@ -281,6 +307,14 @@ public class ThreadClient extends Thread {
                                 case ACCEPT_MEMBER -> {
                                     if(db.acceptMember(cli2ServAdminGroup.getIdGroup(),cli2ServAdminGroup.getAcceptUser())) {
                                         send2GRDS(new Serv2GrdsDBup(Notification.ACCEPT_MEMBER,cli2ServAdminGroup.getAcceptUser()));
+                                        oos.writeObject(true);
+                                    }
+                                    else
+                                        oos.writeObject(false);
+                                }
+                                case REFUSE_MEMBER -> {
+                                    if(db.refuseMember(cli2ServAdminGroup.getIdGroup(),cli2ServAdminGroup.getRefuseUser())) {
+                                        send2GRDS(new Serv2GrdsDBup(Notification.JOIN_GROUP_REQ_POS_RESPONSE,cli2ServAdminGroup.getAcceptUser()));
                                         oos.writeObject(true);
                                     }
                                     else

@@ -41,28 +41,52 @@ public class UIText implements UIClient {
 
     private void contactsCommands() {
         System.out.println("Menu Contacts:");
-        switch (Utils.askOption("Send Messages","See my Messages", "Search User", "Pending Contact Requests", "Contact List", "Add Contact", "Delete Contact", "Go Back")) {
+        switch (Utils.askOption("Send Messages","See my Messages", "Search User", "Pending Contact Requests", "Contact List", "Add Contact","Refuse Contact","Delete Contact", "Go Back")) {
             case 1 -> sendMessages();
             case 2 -> seeMessages();
             case 3 -> searchUser();
             case 4 -> pendingContactRequest();
             case 5 -> contactList();
             case 6 -> addContact();
-            case 7 -> deleteContact();
+            case 7 -> refuseContact();
+            case 8 -> deleteContact();
         }
     }
 
     private void seeMessages() {
-        System.out.println("Choose the contact that you want to view the messages:");
-        ArrayList<String> names = logic.getContactsWithMessages();
-        names.add("Go Back");
-        int op = Utils.askOption(names.toArray(new String[names.size()]));
-        if (op == 0) return;
-        String name = names.get(op-1);
-        System.out.println("Messages from " +name +":\n");
-        for (String msg : logic.getMessagesFrom(name))
-            System.out.println(msg);
-        System.out.println("\n");
+        int op = Utils.askOption("See users messages","See groups messages","Go Back");
+        ArrayList<String> names;
+        switch (op) {
+            case 1 -> {
+                System.out.println("Choose the contact that you want to view the messages: ");
+                names = logic.getContactsWithMessages();
+                names.add("Go Back");
+                op = Utils.askOption(names.toArray(new String[names.size()]));
+                if (op == 0) return;
+                String name = names.get(op-1);
+                System.out.println("Messages from " +name +":\n");
+                for (String msg : logic.getMessagesFrom(name))
+                    System.out.println(msg);
+                System.out.println("\n");
+            }
+            case 2 -> {
+                System.out.println("Choose the group that you want to view the messages: ");
+                names = logic.getGroupsWithMessages();
+                names.add("Go Back");
+                op = Utils.askOption(names.toArray(new String[names.size()]));
+                if (op == 0) return;
+                int group = Integer.parseInt(names.get(op-1).substring(6));
+                System.out.println("Messages from group " +group +":\n");
+                for (String msg : logic.getMessagesFromGroup(group))
+                    System.out.println(msg);
+                System.out.println("\n");
+            }
+            default -> {
+                return;
+            }
+        }
+
+
     }
 
     private void groupsCommands() {
@@ -142,7 +166,13 @@ public class UIText implements UIClient {
 
 
     private void sendMessages() {
-        boolean success = logic.sendMessageTo(Utils.askString("Message to: "), Utils.askString("Message:\n\t"));
+        boolean success = false;
+        int op = Utils.askOption("Send to user","Send to group","Go Back");
+        switch (op) {
+            case 1 -> success = logic.sendMessageTo(Utils.askString("Message to: "), Utils.askString("Message:\n\t"));
+            case 2 -> success = logic.sendMessageTo(Utils.askInt("Group ID: "), Utils.askString("Message:\n\t"));
+        }
+
         if (success)
             System.out.println("Your message was sent successfully!");
         else
@@ -179,7 +209,15 @@ public class UIText implements UIClient {
         if (logic.addContact(username))
             System.out.println("Contact invitation sent to " + username);
         else
-            System.out.println("User not Found.");
+            System.out.println("User with name"+username+"not Found.");
+    }
+
+    private void refuseContact(){
+        String username = Utils.askString("Enter a username:");
+        if(logic.refuseContact(username))
+            System.out.println("Contact refused by:"+username);
+        else
+            System.out.println("Error refused contact with name"+ username);
     }
 
     private void deleteContact() {
@@ -197,7 +235,6 @@ public class UIText implements UIClient {
             System.out.println("Group created with name "+name+" success");
         else
             System.out.println("Error creating group with name "+name);
-
     }
 
     private void joinGroup() {
@@ -227,14 +264,15 @@ public class UIText implements UIClient {
 
     private void adminGroup() {
         System.out.println("Admin Group Menu");
-        switch (Utils.askOption("Rename group", "Accept group member", "Delete group member", "Delete group", "List waiting members", "Exit")) {
+        switch (Utils.askOption("Rename group", "Accept group member","Refuse group member", "Delete group member", "Delete group", "List waiting members", "Exit")) {
             case 0 -> {
             }
             case 1 -> rename();
             case 2 -> acceptanceGroupMember();
-            case 3 -> deleteGroupMember();
-            case 4 -> deleteGroup();
-            case 5 -> listWaitingMembers();
+            case 3 -> refuseGroupMember();
+            case 4 -> deleteGroupMember();
+            case 5 -> deleteGroup();
+            case 6 -> listWaitingMembers();
         }
     }
 
@@ -251,6 +289,14 @@ public class UIText implements UIClient {
             System.out.println("Sucessfully add member with name " + name);
         else
             System.out.println("Failed to add member with name " + name);
+    }
+
+    public void refuseGroupMember(){
+        String name = Utils.askString("Enter the username of the member to refuse:");
+        if (logic.refuseGroupMember(Utils.askInt("Enter the id group: "), name))
+            System.out.println("Sucessfully refuse member with name " + name);
+        else
+            System.out.println("Failed to refuse member with name " + name);
     }
 
     public void deleteGroupMember(){
@@ -286,7 +332,7 @@ public class UIText implements UIClient {
 
             case CONTACT_REQ_RESPONSE -> System.out.println("\nYou have a response to a contact request!");
 
-            case JOIN_GROUP_REQ_RESPONSE -> System.out.println("\nYou have an answer to your request to join a group!");
+            case JOIN_GROUP_REQ_NEG_RESPONSE -> System.out.println("\nYou were not accepted into a group where you had sent a request to join!");
 
             case MESSAGE -> System.out.println("\nYou have a new message!");
 

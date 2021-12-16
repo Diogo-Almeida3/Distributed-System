@@ -9,6 +9,7 @@ public class Cli2ServAdminGroup extends Cli2Serv {
     private String userKick = null;
     private String username = null;
     private String acceptUser = null;
+    private String refuseUser = null;
 
     /* Rename the group | Kick User */
     public Cli2ServAdminGroup(int idGroup,String username,typeEdit editType,String name) {
@@ -21,6 +22,9 @@ public class Cli2ServAdminGroup extends Cli2Serv {
             userKick = name;
         else if(type == typeEdit.ACCEPT_MEMBER)
             acceptUser=name;
+        else if(type == typeEdit.REFUSE_MEMBER)
+            refuseUser=name;
+
         this.username = username.toLowerCase();
     }
 
@@ -44,6 +48,10 @@ public class Cli2ServAdminGroup extends Cli2Serv {
         return userKick;
     }
 
+    public String getRefuseUser() {
+        return refuseUser;
+    }
+
     public int getIdGroup(){
         return idGroup;
     }
@@ -52,7 +60,7 @@ public class Cli2ServAdminGroup extends Cli2Serv {
         return type;
     }
 
-    public enum typeEdit{EDIT_NAME, DELETE_MEMBER, DELETE_GROUP,ACCEPT_MEMBER,WAITING_MEMBERS}
+    public enum typeEdit{EDIT_NAME, DELETE_MEMBER, DELETE_GROUP,ACCEPT_MEMBER,REFUSE_MEMBER,WAITING_MEMBERS}
 
     public String getAcceptUser() {return acceptUser;}
 }

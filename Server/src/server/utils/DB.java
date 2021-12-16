@@ -195,6 +195,21 @@ public class DB {
         }
         return success;
     }
+    public boolean refuseContact(String username, String refuseUsername) {
+        boolean success = false;
+        if(username.equals(refuseUsername))
+            return false;
+        try{
+            Statement statement = dbConn.createStatement();
+
+            String sqlQueryCheck = "DELETE FROM Utilizador_has_Utilizador WHERE Utilizador_username like '" + username + "' AND Utilizador_username1 like '" + refuseUsername + "' OR Utilizador_username like '" + refuseUsername + "' AND Utilizador_username1 like '" + username + "'";
+            statement.executeUpdate(sqlQueryCheck);
+        } catch (SQLException e) {
+           success=false;
+
+        }
+        return success;
+    }
 
     public boolean deleteContact(String username, String usernameDel) {
         if(username.equals(usernameDel))       // check self adding
@@ -463,6 +478,8 @@ public class DB {
     }
 
     public boolean kickGroupMember(int groupId, String username) {
+        if(getGroupAdminUsername(groupId).equals(username))
+            return false;
         try {
             Statement statement = dbConn.createStatement();
             Statement statement1 = dbConn.createStatement();
@@ -489,6 +506,24 @@ public class DB {
             boolean aux = resultSet.next();
             if (aux) {
                 String sqlQueryUpdate = "UPDATE Grupo_has_Utilizador SET isPendenteGrupo=false WHERE Utilizador_username like '" + username + "' AND Grupo_id= '" + groupId + "'";
+                statement.executeUpdate(sqlQueryUpdate);
+                return true;
+            }
+        } catch (SQLException e) {
+            return false;
+        }
+        return false;
+    }
+    public boolean refuseMember(int groupId, String refuseUser) {
+        try {
+            Statement statement = dbConn.createStatement();
+
+            String sqlQueryCheck = "SELECT * FROM Grupo_has_Utilizador WHERE Utilizador_username like '" + refuseUser.toLowerCase() + "' AND Grupo_id like '" + groupId + "' AND isPendenteGrupo=" + true;
+
+            ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
+            boolean existUserWithContactRequest = resultSet.next();
+            if (existUserWithContactRequest) {
+                String sqlQueryUpdate = "DELETE FROM Grupo_has_Utilizador WHERE Utilizador_username = '" + refuseUser.toLowerCase() + "' AND Grupo_id = " + groupId;
                 statement.executeUpdate(sqlQueryUpdate);
                 return true;
             }
@@ -537,6 +572,95 @@ public class DB {
         return false;
     }
 
+    public boolean sendMessage2Group(String sender, int groupId, String message) {
+        try {
+            Statement statement = dbConn.createStatement();
+
+            String sqlQueryCheck = "SELECT * FROM Grupo_has_Utilizador" +
+                    " WHERE Grupo_id=1 AND Utilizador_username='lims' AND isPendenteGrupo=false";
+
+            ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
+            boolean isOnGroup = resultSet.next();
+            if (isOnGroup) {
+                String sqlQueryUpdate = "INSERT INTO Mensagem (data_envio, Utilizador_username, Grupo_id, Utilizador_username1, data_visualizacao, tipo, conteudo)";
+                java.sql.Timestamp date = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
+                sqlQueryUpdate += " VALUES ('" + date + "','" + sender + "',"+groupId+",null,null,'texto','" + message + "')";
+                statement.executeUpdate(sqlQueryUpdate);
+                return true;
+            }
+        } catch (SQLException e) {
+            return false;
+        }
+        return false;
+    }
+
+    public ArrayList<String> getMessages(String sender, String receiver, int limit) {
+        ArrayList<String> messages = new ArrayList<>();
+        if (limit < 1)
+            limit = 20;
+        try {
+            Statement statement = dbConn.createStatement();
+            String sqlQuery = "select  Utilizador_username,conteudo,data_envio,data_visualizacao from Mensagem where Utilizador_username='" + sender + "' and Utilizador_username1='" + receiver + "'" +
+                    " OR Utilizador_username='" + receiver + "' and Utilizador_username1='" + sender + "' order by data_envio LIMIT " + limit;
+            ResultSet resultSet = statement.executeQuery(sqlQuery);
+            while (resultSet.next()) {
+                StringBuilder aux = new StringBuilder();
+
+                String username = resultSet.getString("Utilizador_username");
+
+                if (!username.equals(sender)) {
+                    String dateOfView = resultSet.getString("data_visualizacao");
+                    if (dateOfView == null)
+                        aux.append("[Delivered]\t");
+                    else
+                        aux.append("[View at "+dateOfView+"]\t");
+                } else
+                    aux.append("[Sent at "+resultSet.getString("data_envio")+"]\t");
+
+
+                aux.append(username);
+                aux.append(": ");
+                aux.append(resultSet.getString("conteudo"));
+
+                messages.add(aux.toString());
+            }
+
+            //Update messages view date
+            sqlQuery = "UPDATE Mensagem SET data_visualizacao = '"+new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis())+"' " +
+                    "WHERE data_visualizacao IS NULL AND Utilizador_username='" + sender + "' and Utilizador_username1='" + receiver + "'";
+            statement.executeUpdate(sqlQuery);
+            statement.close();
+        } catch (SQLException e) {
+            return null;
+        }
+        return messages;
+    }
+
+    public ArrayList<String> getMessagesFromGroup(int groupId, int limit) {
+        ArrayList<String> messages = new ArrayList<>();
+        if (limit < 1)
+            limit = 20;
+        try {
+            Statement statement = dbConn.createStatement();
+            String sqlQuery = "select Utilizador_username,conteudo from Mensagem where Grupo_id =" +groupId + " order by data_envio LIMIT " + limit;
+            ResultSet resultSet = statement.executeQuery(sqlQuery);
+            while (resultSet.next()) {
+                StringBuilder aux = new StringBuilder();
+                aux.append(resultSet.getString("Utilizador_username") + ": ");
+                aux.append(resultSet.getString("conteudo"));
+                messages.add(aux.toString());
+            }
+
+            //Update messages view date
+            sqlQuery = "UPDATE Mensagem SET data_visualizacao = '"+new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis())+"' WHERE data_visualizacao IS NULL AND Grupo_id ="+groupId;
+            statement.executeUpdate(sqlQuery);
+            statement.close();
+        } catch (SQLException e) {
+            return null;
+        }
+        return messages;
+    }
+
     public ArrayList<String> listContactsWithMessages(String receiver) {
         ArrayList<String> cantactsWithMessages = new ArrayList<>();
         try {
@@ -553,22 +677,20 @@ public class DB {
         return cantactsWithMessages;
     }
 
-
-    public ArrayList<String> getMessages(String sender, String receiver, int limit) {
-        ArrayList<String> messages = new ArrayList<>();
-        if (limit < 1)
-            limit = 20;
+    public ArrayList<String> listGroupsWithMessages(String receiver) {
+        ArrayList<String> groupsWithMessages = new ArrayList<>();
         try {
             Statement statement = dbConn.createStatement();
-            String sqlQuery = "select conteudo from Mensagem where Utilizador_username='" + sender + "' and Utilizador_username1='" + receiver + "' order by data_envio LIMIT " + limit;
+            String sqlQuery = "SELECT DISTINCT  Mensagem.Grupo_id FROM Mensagem,Grupo_has_Utilizador" +
+                    " WHERE Grupo_has_Utilizador.Utilizador_username = '"+receiver+"' AND Grupo_has_Utilizador.isPendenteGrupo=false AND tipo='texto' AND Mensagem.Grupo_id IS NOT NULL";
             ResultSet resultSet = statement.executeQuery(sqlQuery);
 
             while (resultSet.next()) {
-                messages.add(resultSet.getString("conteudo"));
+                groupsWithMessages.add("Group " + resultSet.getString("Grupo_id"));
             }
         } catch (SQLException e) {
             return null;
         }
-        return messages;
+        return groupsWithMessages;
     }
 }
