@@ -1,6 +1,7 @@
 package server.threads;
 
 import Constants.Multicast;
+import Constants.Notification;
 import data.serv2cli.Serv2Cli;
 import data.serv2grds.Serv2GrdsDBup;
 
@@ -41,12 +42,18 @@ public class ThreadGrds extends Thread {
                 ObjectInputStream ois = new ObjectInputStream(bais);
                 Serv2GrdsDBup data = (Serv2GrdsDBup) ois.readObject();
 
+                if(data.getType() == Notification.NEW_FILE_AVAILABLE){
+                    ThreadReceivedFiles threadReceivedFiles =  new ThreadReceivedFiles(data.getServerIp(),data.getServerPort(),data.getFileId());
+                    threadReceivedFiles.run();
+                }
+
                 for (ThreadClient client : clients) {
                     for (String user : data.getUsers())
                         if (user.equals(client.getCliUsername()))
                             client.notification(data.getType());
                 }
             }
+            /* Lançar thread para receber o ficheiro quando acaba fecha*/
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {

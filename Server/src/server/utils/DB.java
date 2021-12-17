@@ -139,40 +139,36 @@ public class DB {
 
     public ArrayList<String> listContacts(String reqUsername) throws SQLException {
         Statement statement = dbConn.createStatement();
-        Statement statement1 = dbConn.createStatement();
-
         ArrayList<String> contacts = new ArrayList<>();
+        ArrayList<String> listOfContacts = new ArrayList<>();
 
-        String sqlQuery = "SELECT Utilizador_username1 FROM Utilizador_has_Utilizador";
-        if (reqUsername != null)
-            sqlQuery += " WHERE Utilizador_username like '" + reqUsername + "' AND isPendenteContacto=0";
+        String sqlQuery = "SELECT * from Utilizador_has_Utilizador where Utilizador_username='"+reqUsername+"' or Utilizador_username1='"+reqUsername+"' and isPendenteContacto="+false;
 
         ResultSet resultSet = statement.executeQuery(sqlQuery);
 
         while (resultSet.next()) {
-            String sqlQueryList = "SELECT username, nome, estado, ultima_vez_online FROM Utilizador";
-            sqlQueryList += " WHERE username like '" + resultSet.getString("Utilizador_username1") + "'";
-
-            ResultSet resultSetList = statement1.executeQuery(sqlQueryList);
-            resultSetList.next();
-
-            String username = resultSetList.getString("username");
-            String name = resultSetList.getString("nome");
-            String status = resultSetList.getString("estado");
-            Date lastTimeOnline = resultSetList.getDate("ultima_vez_online");
-            contacts.add("[" + username + "] - " + name + " - Status: " + status + " - Last Time Online: " + lastTimeOnline);
-
-            resultSetList.close();
+            String name1 = resultSet.getString("Utilizador_username");
+            String name2 = resultSet.getString("Utilizador_username1");
+            contacts.add(name1.equals(reqUsername) ? name2 : name1);
         }
-        resultSet.close();
+
+        for (String username : contacts) {
+            sqlQuery = "SELECT * FROM Utilizador WHERE username = '" +username+"'";
+            resultSet = statement.executeQuery(sqlQuery);
+            if (resultSet.next()) { // Success at finding more user information
+                String name = resultSet.getString("nome");
+                String status = resultSet.getString("estado");
+                Date lastTimeOnline = resultSet.getDate("ultima_vez_online");
+                listOfContacts.add("[" +username+ "] - " + name + " - Status: " + status + " - Last Time Online: " + lastTimeOnline);
+            }
+        }
         statement.close();
-        statement1.close();
-        return contacts;
+        return listOfContacts;
     }
 
     public boolean addContact(String username, String addUsername) {
         boolean success = false;
-        if(username.equals(addUsername))       // check self adding
+        if (username.equals(addUsername))       // check self adding
             return false;
         try {
             Statement statement = dbConn.createStatement();
@@ -195,24 +191,23 @@ public class DB {
         }
         return success;
     }
+
     public boolean refuseContact(String username, String refuseUsername) {
-        boolean success = false;
-        if(username.equals(refuseUsername))
+        if (username.equals(refuseUsername))
             return false;
-        try{
+        try {
             Statement statement = dbConn.createStatement();
 
             String sqlQueryCheck = "DELETE FROM Utilizador_has_Utilizador WHERE Utilizador_username like '" + username + "' AND Utilizador_username1 like '" + refuseUsername + "' OR Utilizador_username like '" + refuseUsername + "' AND Utilizador_username1 like '" + username + "'";
             statement.executeUpdate(sqlQueryCheck);
+            return true;
         } catch (SQLException e) {
-           success=false;
-
+            return false;
         }
-        return success;
     }
 
     public boolean deleteContact(String username, String usernameDel) {
-        if(username.equals(usernameDel))       // check self adding
+        if (username.equals(usernameDel))       // check self adding
             return false;
         try {
             Statement statement = dbConn.createStatement();
@@ -236,12 +231,12 @@ public class DB {
         ArrayList<String> userInfo = new ArrayList<>();
         try {
             statement = dbConn.createStatement();
-            String sqlQuery = "SELECT Utilizador_username1 FROM Utilizador_has_Utilizador";
-            sqlQuery += " WHERE Utilizador_username like '" + username + "' and isPendenteContacto= " + true;
+            String sqlQuery = "SELECT Utilizador_username FROM Utilizador_has_Utilizador";
+            sqlQuery += " WHERE Utilizador_username1 like '" + username + "' and isPendenteContacto= " + true;
 
             ResultSet resultSet = statement.executeQuery(sqlQuery);
             while (resultSet.next()) {
-                String usernameInfo = resultSet.getString("Utilizador_username1");
+                String usernameInfo = resultSet.getString("Utilizador_username");
                 userInfo.add("[" + usernameInfo + "]");
             }
             resultSet.close();
@@ -368,30 +363,20 @@ public class DB {
 
     public boolean leaveGroup(String username, int groupId) {
         try {
-            Statement statement = dbConn.createStatement();
-            Statement statement1 = dbConn.createStatement();
-            Statement statement2 = dbConn.createStatement();
-            String sqlQuery = "SELECT * FROM Grupo WHERE id=" + groupId;
+            if (username.equals(getGroupAdminUsername(groupId))) // If the leaving member is the group's creator, the group is deleted
+                return deleteGroup(groupId);
 
-            ResultSet resultSet = statement1.executeQuery(sqlQuery);
-            boolean aux = resultSet.next();
-            if (aux) {
-                String sqlQueryVerify = "Select * FROM Grupo_has_Utilizador Where Grupo_id=" + groupId + " AND Utilizador_username like '" + username + "'";
-                ResultSet resultSet1 = statement1.executeQuery(sqlQueryVerify);
-                boolean verify = resultSet1.next();
-                if (!verify) {
-                    String sqlQueryJoin = "DELETE FROM Grupo_has_Utilizador VALUES ('" + groupId + "','" + username + "',true)";
-                    String sqlQueryDeleteMessages = "DELETE FROM Mensagem WHERE Utilizador_username LIKE '" + username + "' AND Grupo_id='" + groupId + "'";
-                    statement.executeUpdate(sqlQueryJoin);
-                    statement2.executeUpdate(sqlQueryDeleteMessages);
-                    statement.close();
-                    return true;
-                }
-            }
+            Statement statement = dbConn.createStatement();
+            String sqlQuery = "DELETE FROM Grupo_has_Utilizador WHERE Utilizador_username='" + username + "' AND Grupo_id=" + groupId;
+            statement.executeUpdate(sqlQuery);
+            statement.close();
+            statement = dbConn.createStatement();
+            sqlQuery = "DELETE FROM Mensagem WHERE Utilizador_username='" + username + "' AND Grupo_id=" + groupId;
+            statement.executeUpdate(sqlQuery);
+            return true;
         } catch (SQLException e) {
             return false;
         }
-        return false;
     }
 
     public String getGroupAdminUsername(int groupId) {
@@ -478,7 +463,7 @@ public class DB {
     }
 
     public boolean kickGroupMember(int groupId, String username) {
-        if(getGroupAdminUsername(groupId).equals(username))
+        if (getGroupAdminUsername(groupId).equals(username))
             return false;
         try {
             Statement statement = dbConn.createStatement();
@@ -514,6 +499,7 @@ public class DB {
         }
         return false;
     }
+
     public boolean refuseMember(int groupId, String refuseUser) {
         try {
             Statement statement = dbConn.createStatement();
@@ -584,7 +570,7 @@ public class DB {
             if (isOnGroup) {
                 String sqlQueryUpdate = "INSERT INTO Mensagem (data_envio, Utilizador_username, Grupo_id, Utilizador_username1, data_visualizacao, tipo, conteudo)";
                 java.sql.Timestamp date = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
-                sqlQueryUpdate += " VALUES ('" + date + "','" + sender + "',"+groupId+",null,null,'texto','" + message + "')";
+                sqlQueryUpdate += " VALUES ('" + date + "','" + sender + "'," + groupId + ",null,null,'texto','" + message + "')";
                 statement.executeUpdate(sqlQueryUpdate);
                 return true;
             }
@@ -600,12 +586,12 @@ public class DB {
             limit = 20;
         try {
             Statement statement = dbConn.createStatement();
-            String sqlQuery = "select  Utilizador_username,conteudo,data_envio,data_visualizacao from Mensagem where Utilizador_username='" + sender + "' and Utilizador_username1='" + receiver + "'" +
+            String sqlQuery = "select  id,Utilizador_username,conteudo,data_envio,data_visualizacao from Mensagem where Utilizador_username='" + sender + "' and Utilizador_username1='" + receiver + "'" +
                     " OR Utilizador_username='" + receiver + "' and Utilizador_username1='" + sender + "' order by data_envio LIMIT " + limit;
             ResultSet resultSet = statement.executeQuery(sqlQuery);
             while (resultSet.next()) {
                 StringBuilder aux = new StringBuilder();
-
+                aux.append("[" + resultSet.getString("id") + "] ");
                 String username = resultSet.getString("Utilizador_username");
 
                 if (!username.equals(sender)) {
@@ -613,9 +599,9 @@ public class DB {
                     if (dateOfView == null)
                         aux.append("[Delivered]\t");
                     else
-                        aux.append("[View at "+dateOfView+"]\t");
+                        aux.append("[View at " + dateOfView + "]\t");
                 } else
-                    aux.append("[Sent at "+resultSet.getString("data_envio")+"]\t");
+                    aux.append("[Sent at " + resultSet.getString("data_envio") + "]\t");
 
 
                 aux.append(username);
@@ -626,7 +612,7 @@ public class DB {
             }
 
             //Update messages view date
-            sqlQuery = "UPDATE Mensagem SET data_visualizacao = '"+new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis())+"' " +
+            sqlQuery = "UPDATE Mensagem SET data_visualizacao = '" + new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis()) + "' " +
                     "WHERE data_visualizacao IS NULL AND Utilizador_username='" + sender + "' and Utilizador_username1='" + receiver + "'";
             statement.executeUpdate(sqlQuery);
             statement.close();
@@ -642,17 +628,18 @@ public class DB {
             limit = 20;
         try {
             Statement statement = dbConn.createStatement();
-            String sqlQuery = "select Utilizador_username,conteudo from Mensagem where Grupo_id =" +groupId + " order by data_envio LIMIT " + limit;
+            String sqlQuery = "select id,Utilizador_username,conteudo from Mensagem where Grupo_id =" + groupId + " order by data_envio LIMIT " + limit;
             ResultSet resultSet = statement.executeQuery(sqlQuery);
             while (resultSet.next()) {
                 StringBuilder aux = new StringBuilder();
+                aux.append("[" + resultSet.getString("id") + "] ");
                 aux.append(resultSet.getString("Utilizador_username") + ": ");
                 aux.append(resultSet.getString("conteudo"));
                 messages.add(aux.toString());
             }
 
             //Update messages view date
-            sqlQuery = "UPDATE Mensagem SET data_visualizacao = '"+new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis())+"' WHERE data_visualizacao IS NULL AND Grupo_id ="+groupId;
+            sqlQuery = "UPDATE Mensagem SET data_visualizacao = '" + new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis()) + "' WHERE data_visualizacao IS NULL AND Grupo_id =" + groupId;
             statement.executeUpdate(sqlQuery);
             statement.close();
         } catch (SQLException e) {
@@ -682,7 +669,7 @@ public class DB {
         try {
             Statement statement = dbConn.createStatement();
             String sqlQuery = "SELECT DISTINCT  Mensagem.Grupo_id FROM Mensagem,Grupo_has_Utilizador" +
-                    " WHERE Grupo_has_Utilizador.Utilizador_username = '"+receiver+"' AND Grupo_has_Utilizador.isPendenteGrupo=false AND tipo='texto' AND Mensagem.Grupo_id IS NOT NULL";
+                    " WHERE Grupo_has_Utilizador.Utilizador_username = '" + receiver + "' AND Grupo_has_Utilizador.isPendenteGrupo=false AND tipo='texto' AND Mensagem.Grupo_id IS NOT NULL";
             ResultSet resultSet = statement.executeQuery(sqlQuery);
 
             while (resultSet.next()) {
@@ -692,5 +679,90 @@ public class DB {
             return null;
         }
         return groupsWithMessages;
+    }
+
+    public boolean deleteMessage(String sender, int messageID) {
+        try {
+            Statement statement = dbConn.createStatement();
+            String sqlDeleteQuery = "DELETE FROM Mensagem WHERE Utilizador_username= '" + sender + "' AND id=" + messageID;
+            statement.executeUpdate(sqlDeleteQuery);
+
+            statement.close();
+        } catch (SQLException e) {
+            return false;
+        }
+        return true;
+    }
+
+    public String getReceiverDeleteMessage(int idMessage){
+        try{
+            Statement statement = dbConn.createStatement();
+
+            // Get data to notify users
+            String sqlQuery = "SELECT Utilizador_username1,Grupo_id FROM Mensagem WHERE id="+ idMessage;
+            ResultSet resultSet = statement.executeQuery(sqlQuery);
+            resultSet.next();
+
+            String receiver = resultSet.getString("Utilizador_username1");
+
+            if (receiver == null) { // Is a group
+                receiver = "Group:" + resultSet.getString("Grupo_id");
+            }
+            return receiver;
+        } catch (SQLException e) {
+            return null;
+        }
+    }
+
+    public int sendFile(String sender, String receiver, String filename) {
+        int fileID = -1;
+        try {
+            Statement statement = dbConn.createStatement();
+            String sqlQueryCheck = "SELECT * FROM Utilizador_has_Utilizador" +
+                    " WHERE isPendenteContacto = FALSE AND " +
+                    "(Utilizador_username = '" + sender + "' AND Utilizador_username1 = '" + receiver + "' " +
+                    "OR Utilizador_username = '" + receiver + "' AND Utilizador_username1 = '" + sender + "')";
+
+            ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
+            boolean isContact = resultSet.next();
+
+            if (isContact) {
+                String sqlQueryUpdate = "INSERT INTO Mensagem (data_envio, Utilizador_username, Grupo_id, Utilizador_username1, data_visualizacao, tipo, conteudo)";
+                java.sql.Timestamp date = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
+                date.setNanos(0);
+                sqlQueryUpdate += " VALUES ('" + date + "','" + sender + "',null,'" + receiver + "',null,'ficheiro','" + filename + "')";
+                statement.executeUpdate(sqlQueryUpdate);
+
+                String sqlQueryMsgId = "SELECT id FROM Mensagem where Utilizador_username='"+sender +"' AND Utilizador_username1='"+ receiver +"' AND data_envio='" + date+ "'";
+                ResultSet resultSet1 = statement.executeQuery(sqlQueryMsgId);
+
+                if(resultSet1.next())
+                    fileID = resultSet1.getInt("id");
+            }
+            statement.close();
+        } catch (SQLException e) {
+            return -1;
+        }
+        return fileID;
+    }
+
+    public String getFileDirectory(int id) {
+        try {
+            Statement statement = dbConn.createStatement();
+
+            String sqlQuery = "SELECT id,Utilizador_username,conteudo FROM Mensagem WHERE id="+id + " AND conteudo='ficheiro'";
+            statement.executeQuery(sqlQuery);
+
+            ResultSet resultSet = statement.executeQuery(sqlQuery);
+
+            if(resultSet.next()) {
+                String dir = "/" +resultSet.getString("Utilizador_username")+"/"+id+"-"+resultSet.getString("conteudo");
+                statement.close();
+                return dir;
+            }
+        } catch (SQLException e) {
+            return null;
+        }
+        return null;
     }
 }

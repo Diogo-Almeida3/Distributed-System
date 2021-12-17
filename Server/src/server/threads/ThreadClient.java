@@ -9,13 +9,18 @@ import server.utils.DB;
 
 import javax.swing.*;
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.net.*;
 import java.sql.Array;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 
 public class ThreadClient extends Thread {
+
+
+    private static final String serverDirectory = "./Files/"+ ManagementFactory.getRuntimeMXBean().getName();
 
     private boolean exit = false;
 
@@ -45,6 +50,12 @@ public class ThreadClient extends Thread {
     public boolean isOffline() {
         return Calendar.getInstance().getTimeInMillis() - lastTimeOn > 30 * 1000;
     }
+
+    private int idFilesRequest = 0;
+    HashMap<Integer, FileOutputStream> downloadFiles = new HashMap<>();
+    ThreadSendFiles threadSendFiles = new ThreadSendFiles(serverDirectory);
+
+
 
     public ThreadClient(Socket sCli, DB db, String grdsIp, int grdsPort, ThreadPing threadPing) throws IOException {
         this.sCli = sCli;
@@ -236,8 +247,7 @@ public class ThreadClient extends Thread {
                         ArrayList<String> info = db.listGroups();
                         oos.writeObject(info);
                     }
-                    case EDIT_GROUP -> {
-                    }
+
                     case LEAVE_GROUP -> {
                         Cli2ServLeavGroup cli2ServLeavGroup = (Cli2ServLeavGroup) cliMessage;
 
@@ -267,6 +277,24 @@ public class ThreadClient extends Thread {
                             else
                                 send2GRDS(new Serv2GrdsDBup(Notification.MESSAGE, message.getReceiver()));
                         } else oos.writeObject(false);
+                    }
+                    case DELETE_MESSAGE -> {
+                        Cli2ServDelMsg delMsg =(Cli2ServDelMsg) cliMessage;
+
+                        String name = db.getReceiverDeleteMessage(delMsg.getIdMessage()); // Gets the receiver's name or the id of the group to whom the message was sent
+
+                        if(db.deleteMessage(delMsg.getUsername(),delMsg.getIdMessage())) { // Delete message
+                            if (name.startsWith("Group:")) { // Is group
+                                int groupId = Integer.parseInt(name.substring(6));
+                                send2GRDS(new Serv2GrdsDBup(Notification.MESSAGE_DELETE, db.getGroupUsers(groupId)));
+                            }
+                            else // Is user
+                                send2GRDS(new Serv2GrdsDBup(Notification.MESSAGE_DELETE,name));
+                            oos.writeObject(true);
+                        }
+                        else {
+                            oos.writeObject(false);
+                        }
                     }
                     case GET_MESSAGES -> {
                         Cli2ServGetMsg request = (Cli2ServGetMsg) cliMessage;
@@ -356,6 +384,47 @@ public class ThreadClient extends Thread {
                         socketSend2Cli = new Socket(InetAddress.getLocalHost().getHostAddress(), cli2ServTCPport.getPort());
                         os2Cli = socketSend2Cli.getOutputStream();
                         oos2Cli = new ObjectOutputStream(os2Cli);
+                    }
+                    case SEND_FILE -> {
+                        Cli2ServFile cli2ServFile = (Cli2ServFile) cliMessage;
+                        int id = cli2ServFile.getIdOfRequest();
+
+                        if (downloadFiles.containsKey(id)) // A directory for this file already exists and is already being constructed
+                        {
+                            byte[] filechunk = cli2ServFile.getFilePart();
+                            if (filechunk.length == 0) { // File fully received
+                                FileOutputStream fos = downloadFiles.get(id);
+                                fos.flush();
+                                fos.close();
+                                downloadFiles.remove(id);
+
+                                if (!threadSendFiles.isAlive()) // If the server never receives a file it never launches this thread to save resources
+                                    threadSendFiles.run();
+
+                                if (cli2ServFile.isSend2group()) {
+                                    ArrayList<String> users2notify = db.getGroupUsers(cli2ServFile.getGroupID());
+                                    String[] aux = users2notify.toArray(new String[users2notify.size()]);
+
+                                    send2GRDS(new Serv2GrdsDBup(Notification.NEW_FILE_AVAILABLE, threadSendFiles.getIp(), threadSendFiles.getPort(),id,aux));
+                                }
+                                else
+                                    send2GRDS(new Serv2GrdsDBup(Notification.NEW_FILE_AVAILABLE, threadSendFiles.getIp(), threadSendFiles.getPort(),id,cli2ServFile.getReceiver()));
+                            }
+                            else  // File under construction
+                                downloadFiles.get(id).write(filechunk);
+                        } else if (id == -1){ // Create directory for the file and add to hashmap
+                            String sender = cli2ServFile.getSender();
+                            String fileName = cli2ServFile.getFilename();
+                            int idOfFile = db.sendFile(sender,cli2ServFile.getReceiver(),cli2ServFile.getFilename());
+                            oos.writeObject(idOfFile);
+
+                            File file = new File(serverDirectory +'/'+sender + "/"+idOfFile+"-"+fileName);
+                            file.getParentFile().mkdirs();
+                            file.createNewFile();
+                            downloadFiles.put(idOfFile, new FileOutputStream(file));
+                            FileOutputStream fos = downloadFiles.get(idOfFile);
+                            fos.write(cli2ServFile.getFilePart());
+                        }
                     }
                 }
                 lastTimeOn = Calendar.getInstance().getTimeInMillis();

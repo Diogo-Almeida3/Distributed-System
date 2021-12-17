@@ -216,7 +216,6 @@ public class Client {
         return infoUsers;
     }
 
-
     public void exitServer() {
         try {
             threadServerTCP.setExit(true);
@@ -426,6 +425,20 @@ public class Client {
         return success;
     }
 
+    public boolean deleteMessageTo(int idMessage){
+        if(!isLogged) return false;
+
+        Cli2ServDelMsg del = new Cli2ServDelMsg(username,idMessage);
+        boolean success = false;
+        try{
+            out2serv.writeObject(del);
+            success = (boolean) inServ.readObject();
+        }catch (IOException | ClassNotFoundException e){
+            System.err.println("Error on delete message with id "+idMessage+" in communication with server!");
+        }
+        return success;
+    }
+
     public boolean acceptanceGroupMember(int idGroup, String nameMember) {
         if(!isLogged) return false;
 
@@ -519,6 +532,34 @@ public class Client {
         }
         return null;
     }
+
+    public boolean sendFileTo(String receiver, String dir) throws IllegalArgumentException, IOException, ClassNotFoundException {
+        File f = new File(dir);
+
+        if (!f.isFile()) // Test if the directory sent by the user is valid
+            throw new IllegalArgumentException("This directory is not valid!");
+
+        ThreadSendFile threadSendFile = new ThreadSendFile(out2serv,inServ,username,receiver,f);
+        threadSendFile.run();
+        return true;
+    }
+
+
+    public boolean sendFileTo(int idGroup,String dir){
+        /*
+        File f = new File(dir);
+
+        if(!f.isFile())
+            throw new IllegalArgumentException("This directory is not valid!");
+
+        ThreadSendFile threadSendFileGroup = new ThreadSendFile(out2serv,inServ,username,idGroup,f);
+        threadSendFileGroup.run();
+         */
+        return false;
+    }
+
+
+
 
 
 

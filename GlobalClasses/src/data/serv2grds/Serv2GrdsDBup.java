@@ -11,10 +11,7 @@ public class Serv2GrdsDBup extends Serv2Grds {
 
     private String ServerIp = null;
     private int ServerPort = 0;
-
-    public Serv2GrdsDBup() {
-        super(Request.BD_UPDATE);
-    }
+    private int fileId = -1;
 
     public Serv2GrdsDBup(Notification type, String ... users2add) {
         super(Request.BD_UPDATE);
@@ -23,18 +20,19 @@ public class Serv2GrdsDBup extends Serv2Grds {
         this.type = type;
     }
 
-    public Serv2GrdsDBup(Notification type, Collection<String> groupUsers) {
+    public Serv2GrdsDBup(Notification type, ArrayList<String> groupUsers) {
         super(Request.BD_UPDATE);
         if (groupUsers != null)
             users.addAll(groupUsers);
         this.type = type;
     }
 
-    public Serv2GrdsDBup(Notification type, String serverIp, int serverPort, String ... users2add) {
+    public Serv2GrdsDBup(Notification type, String serverIp, int serverPort, int fileId,String ... users2add) {
         super(Request.BD_UPDATE);
+        this.fileId = fileId;
+        this.ServerIp = serverIp;
         if (users2add != null)
             addUsers(users2add);
-        this.ServerIp = serverIp;
         this.ServerPort = serverPort;
         this.type = type;
     }
@@ -48,6 +46,10 @@ public class Serv2GrdsDBup extends Serv2Grds {
 
     public Notification getType() {
         return type;
+    }
+
+    public int getFileId() {
+        return fileId;
     }
 
     public String getServerIp() {

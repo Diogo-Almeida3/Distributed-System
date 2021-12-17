@@ -23,11 +23,12 @@ public class UIText implements UIClient {
         this.logic = logic;
     }
 
+    /*---------------------------------------------------------- MENU PRINCIPAL  -------------------------------------------------------*/
     public void run() {
         menuLoginReg();
         while (!exit) {
             System.out.println("Menu:");
-            switch (Utils.askOption("Contacts", "Groups", "Edit Profile", "Exit")) {
+            switch (Utils.askOption("Menu Contacts", "Menu Groups", "Menu Profile", "Exit")) {
                 case 0 -> {
                     logic.exitServer();
                     exit = true;
@@ -38,12 +39,12 @@ public class UIText implements UIClient {
             }
         }
     }
-
+    /*---------------------------------------------------------- CONTACTOS -------------------------------------------------------*/
     private void contactsCommands() {
         System.out.println("Menu Contacts:");
-        switch (Utils.askOption("Send Messages","See my Messages", "Search User", "Pending Contact Requests", "Contact List", "Add Contact","Refuse Contact","Delete Contact", "Go Back")) {
-            case 1 -> sendMessages();
-            case 2 -> seeMessages();
+        switch (Utils.askOption("Messages","Files", "Search User", "Pending Contact Requests", "Contact List", "Add Contact","Refuse Contact","Delete Contact", "Go Back")) {
+            case 1 -> messagesComands();
+            case 2 -> filesComands();
             case 3 -> searchUser();
             case 4 -> pendingContactRequest();
             case 5 -> contactList();
@@ -51,132 +52,6 @@ public class UIText implements UIClient {
             case 7 -> refuseContact();
             case 8 -> deleteContact();
         }
-    }
-
-    private void seeMessages() {
-        int op = Utils.askOption("See users messages","See groups messages","Go Back");
-        ArrayList<String> names;
-        switch (op) {
-            case 1 -> {
-                System.out.println("Choose the contact that you want to view the messages: ");
-                names = logic.getContactsWithMessages();
-                names.add("Go Back");
-                op = Utils.askOption(names.toArray(new String[names.size()]));
-                if (op == 0) return;
-                String name = names.get(op-1);
-                System.out.println("Messages from " +name +":\n");
-                for (String msg : logic.getMessagesFrom(name))
-                    System.out.println(msg);
-                System.out.println("\n");
-            }
-            case 2 -> {
-                System.out.println("Choose the group that you want to view the messages: ");
-                names = logic.getGroupsWithMessages();
-                names.add("Go Back");
-                op = Utils.askOption(names.toArray(new String[names.size()]));
-                if (op == 0) return;
-                int group = Integer.parseInt(names.get(op-1).substring(6));
-                System.out.println("Messages from group " +group +":\n");
-                for (String msg : logic.getMessagesFromGroup(group))
-                    System.out.println(msg);
-                System.out.println("\n");
-            }
-            default -> {
-                return;
-            }
-        }
-
-
-    }
-
-    private void groupsCommands() {
-        System.out.println("Menu Groups:");
-        switch (Utils.askOption("List Groups", "Join Group", "Create Group", "Manage Group", "Leave Group", "Go Back")) {
-            case 1 -> listGroups();
-            case 2 -> joinGroup();
-            case 3 -> createGroup();
-            case 4 -> adminGroup();
-            case 5 -> leaveGroup();
-        }
-    }
-
-    private void profileCommands() {
-        System.out.println("Menu Profile:");
-        switch (Utils.askOption("Edit Name", "Edit Username", "Edit password", "Go Back")) {
-            case 1 -> editProfileName();
-            case 2 -> editProfileUsername();
-            case 3 -> editProfilePass();
-        }
-    }
-
-    public void editProfileName() {
-        if (logic.editProfileName(Utils.askString("Enter a new name: ")))
-            System.out.println("Success editing profile name");
-        else
-            System.out.println("Failed editing profile name");
-    }
-
-    public void editProfileUsername() {
-        if (logic.editProfileUsername(Utils.askString("Enter a new Username: "), Utils.askString("Enter your password: ")))
-            System.out.println("Success editing profile username");
-        else
-            System.out.println("Failed editing profile username");
-    }
-
-    public void editProfilePass() {
-        if (logic.editProfilePass(Utils.askString("Enter a old password: "), Utils.askString("Enter a new password: ")))
-            System.out.println("Success editing profile username");
-        else
-            System.out.println("Failed editing profile username");
-    }
-
-
-    private void menuLoginReg() {
-        boolean success = false;
-        System.out.println("Menu:");
-        switch (Utils.askOption("Login", "Register", "Exit")) {
-            case 0 -> exit = true;
-            case 1 -> {
-                int attempts = 0;
-                do {
-                    success = logic.login(Utils.askString("Username: "), Utils.askString("Password: "));
-
-                    if (success)
-                        System.out.println("Login with success!");
-                    else {
-                        System.out.println("Username or password entered is invalid!");
-                        if (++attempts >= 3) {
-                            exit = true;
-                            break;
-                        }
-                    }
-                } while (!success);
-            }
-            case 2 -> {
-                success = logic.register(Utils.askString("Username: "), Utils.askString("Name: "), Utils.askString("Password: "));
-                if (success)
-                    System.out.println("Register with success!");
-                else {
-                    menuLoginReg();
-                    System.out.println("It was not possible to register this user!");
-                }
-            }
-        }
-    }
-
-
-    private void sendMessages() {
-        boolean success = false;
-        int op = Utils.askOption("Send to user","Send to group","Go Back");
-        switch (op) {
-            case 1 -> success = logic.sendMessageTo(Utils.askString("Message to: "), Utils.askString("Message:\n\t"));
-            case 2 -> success = logic.sendMessageTo(Utils.askInt("Group ID: "), Utils.askString("Message:\n\t"));
-        }
-
-        if (success)
-            System.out.println("Your message was sent successfully!");
-        else
-            System.out.println("An error occurred while sending the message!");
     }
 
     private void contactList() {
@@ -201,7 +76,6 @@ public class UIText implements UIClient {
             System.out.println(pendingList);
         else
             System.out.println("Your list of pending contacts request is empty");
-
     }
 
     private void addContact() {
@@ -226,7 +100,18 @@ public class UIText implements UIClient {
             System.out.println("Contact with name "+deletContact+" deleted.");
         else
             System.out.println("Error deleting contact with name"+ deletContact);
+    }
+    /*----------------------------------------------------------- GRUPOS ---------------------------------------------------------*/
 
+    private void groupsCommands() {
+        System.out.println("Menu Groups:");
+        switch (Utils.askOption("List Groups", "Join Group", "Create Group", "Manage Group", "Leave Group", "Go Back")) {
+            case 1 -> listGroups();
+            case 2 -> joinGroup();
+            case 3 -> createGroup();
+            case 4 -> adminGroup();
+            case 5 -> leaveGroup();
+        }
     }
 
     private void createGroup() {
@@ -323,6 +208,172 @@ public class UIText implements UIClient {
             System.out.println("There are no members waiting");
     }
 
+    /*--------------------------------------------------------- MENSAGENS--------------------------------------------------------*/
+    private void messagesComands() {
+        int op = Utils.askOption("Send Messages","Delete Messages","See users messages","See groups messages","Go Back");
+        switch (op) {
+            case 1 -> sendMessages();
+            case 2 -> deleteMessages();
+            case 3 -> seeUsersMessages();
+            case 4 -> seeGroupsMessages();
+            default ->{ return;}
+        }
+    }
+
+    private void sendMessages() {
+        boolean success = false;
+        int op = Utils.askOption("Send to user","Send to group","Go Back");
+        switch (op) {
+            case 1 -> success = logic.sendMessageTo(Utils.askString("Message to: "), Utils.askString("Message:\n\t"));
+            case 2 -> success = logic.sendMessageTo(Utils.askInt("Group ID: "), Utils.askString("Message:\n\t"));
+        }
+        if (success)
+            System.out.println("Your message was sent successfully!");
+        else
+            System.out.println("An error occurred while sending the message!");
+    }
+    private void deleteMessages() {
+        if(logic.deleteMessageTo(Utils.askInt("Delete Message with ID :")))
+            System.out.println("Your message was deleted sucessfully");
+        else
+            System.out.println("An error occurred while deleting the message");
+    }
+
+    private void seeUsersMessages(){
+        ArrayList<String> names;
+        System.out.println("Choose the contact that you want to view the messages: ");
+        names = logic.getContactsWithMessages();
+        names.add("Go Back");
+        int op = Utils.askOption(names.toArray(new String[names.size()]));
+        if (op == 0) return;
+        String name = names.get(op-1);
+        System.out.println("Messages from " +name +":\n");
+        for (String msg : logic.getMessagesFrom(name))
+            System.out.println(msg);
+        System.out.println("\n");
+    }
+
+    private void seeGroupsMessages(){
+        ArrayList<String> names;
+        System.out.println("Choose the group that you want to view the messages: ");
+        names = logic.getGroupsWithMessages();
+        names.add("Go Back");
+        int op = Utils.askOption(names.toArray(new String[names.size()]));
+        if (op == 0) return;
+        int group = Integer.parseInt(names.get(op-1).substring(6));
+        System.out.println("Messages from group " +group +":\n");
+        for (String msg : logic.getMessagesFromGroup(group))
+            System.out.println(msg);
+        System.out.println("\n");
+    }
+
+    /*--------------------------------------------------------- Ficheiros --------------------------------------------------------*/
+    private void filesComands() {
+        int op = Utils.askOption("Send File","Delete File","See users Files","See groups Files","Go Back");
+        switch (op) {
+            case 1 -> sendFiles();
+            case 2 -> deleteFiles();
+            case 3 -> seeUsersFiles();
+            case 4 -> seeGroupsFiles();
+            default ->{ return;}
+        }
+    }
+
+    private void sendFiles() {
+        boolean success = false;
+        int op = Utils.askOption("Send to user","Send to group","Go Back");
+        switch (op) {
+            case 1 -> {
+                try {
+                    success = logic.sendFileTo(Utils.askString("File to: "), Utils.askString("File name:"));
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+            case 2 -> success = logic.sendFileTo(Utils.askInt("Group ID: "), Utils.askString("File name:"));
+        }
+        if (success)
+            System.out.println("Your file was sent successfully!");
+        else
+            System.out.println("An error occurred while sending the message!");
+    }
+
+    private void deleteFiles() {
+    }
+
+    private void seeUsersFiles() {
+    }
+
+    private void seeGroupsFiles() {
+    }
+
+    /*---------------------------------------------------------- PERFIL UTILIZADOR -------------------------------------------------------*/
+    private void profileCommands() {
+        System.out.println("Menu Profile:");
+        switch (Utils.askOption("Edit Name", "Edit Username", "Edit password", "Go Back")) {
+            case 1 -> editProfileName();
+            case 2 -> editProfileUsername();
+            case 3 -> editProfilePass();
+        }
+    }
+
+    public void editProfileName() {
+        if (logic.editProfileName(Utils.askString("Enter a new name: ")))
+            System.out.println("Success editing profile name");
+        else
+            System.out.println("Failed editing profile name");
+    }
+
+    public void editProfileUsername() {
+        if (logic.editProfileUsername(Utils.askString("Enter a new Username: "), Utils.askString("Enter your password: ")))
+            System.out.println("Success editing profile username");
+        else
+            System.out.println("Failed editing profile username");
+    }
+
+    public void editProfilePass() {
+        if (logic.editProfilePass(Utils.askString("Enter a old password: "), Utils.askString("Enter a new password: ")))
+            System.out.println("Success editing profile username");
+        else
+            System.out.println("Failed editing profile username");
+    }
+
+    /*---------------------------------------------------- LOGIN E REGISTO-------------------------------------------------------*/
+    private void menuLoginReg() {
+        boolean success = false;
+        System.out.println("Menu:");
+        switch (Utils.askOption("Login", "Register", "Exit")) {
+            case 0 -> exit = true;
+            case 1 -> {
+                int attempts = 0;
+                do {
+                    success = logic.login(Utils.askString("Username: "), Utils.askString("Password: "));
+
+                    if (success)
+                        System.out.println("Login with success!");
+                    else {
+                        System.out.println("Username or password entered is invalid!");
+                        if (++attempts >= 3) {
+                            exit = true;
+                            break;
+                        }
+                    }
+                } while (!success);
+            }
+            case 2 -> {
+                success = logic.register(Utils.askString("Username: "), Utils.askString("Name: "), Utils.askString("Password: "));
+                if (success)
+                    System.out.println("Register with success!");
+                else {
+                    menuLoginReg();
+                    System.out.println("It was not possible to register this user!");
+                }
+            }
+        }
+    }
+
+    /*--------------------------------------------------------- NOTIFICAÇÕES -------------------------------------------------------*/
+
     @Override
     public void notification(Notification type) {
         switch (type) {
@@ -340,6 +391,8 @@ public class UIText implements UIClient {
 
             case FILE -> System.out.println("\nYou have a new file to transfer!");
 
+            case NEW_FILE_AVAILABLE -> System.out.println("\nYou have a new file available!");
+
             case FILE_DELETE -> System.out.println("\nOne file has been deleted!");
 
             case GROUP_DELETE -> System.out.println("\nA group you were in was deleted!");
@@ -351,6 +404,7 @@ public class UIText implements UIClient {
             case ACCEPT_MEMBER -> System.out.println("\nYou have been accepted into a group!");
 
             case EDIT_GROUP -> System.out.println("\nThe name of the group you are in has been edited.");
+
 
         }
     }
