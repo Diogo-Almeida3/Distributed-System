@@ -286,8 +286,12 @@ public class UIText implements UIClient {
             case 1 -> {
                 try {
                     success = logic.sendFileTo(Utils.askString("File to: "), Utils.askString("File name:"));
-                } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Directory is not valid try again..");
+                    return;
+                }
+                catch (IOException | ClassNotFoundException e) {
+                    System.err.println("An error has occurred - " + e.getMessage());
                 }
             }
             case 2 -> success = logic.sendFileTo(Utils.askInt("Group ID: "), Utils.askString("File name:"));

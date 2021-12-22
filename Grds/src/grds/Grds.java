@@ -114,7 +114,7 @@ public class Grds {
                     if (systemReq instanceof Serv2Grds) {
                         Serv2Grds data = (Serv2Grds) systemReq;
 
-                        switch (data.getRequest()) { // TODO: Crash here
+                        switch (data.getRequest()) {
                             case REGISTER -> {
                                 ServerData serv = new ServerData(datagramPacket.getAddress(), data.getPort());
                                 synchronized (servers) {

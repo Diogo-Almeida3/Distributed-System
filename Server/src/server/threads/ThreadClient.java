@@ -417,7 +417,6 @@ public class ThreadClient extends Thread {
                             String fileName = cli2ServFile.getFilename();
                             int idOfFile = db.sendFile(sender,cli2ServFile.getReceiver(),cli2ServFile.getFilename());
                             oos.writeObject(idOfFile);
-
                             File file = new File(serverDirectory +'/'+sender + "/"+idOfFile+"-"+fileName);
                             file.getParentFile().mkdirs();
                             file.createNewFile();

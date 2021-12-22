@@ -563,7 +563,7 @@ public class DB {
             Statement statement = dbConn.createStatement();
 
             String sqlQueryCheck = "SELECT * FROM Grupo_has_Utilizador" +
-                    " WHERE Grupo_id=1 AND Utilizador_username='lims' AND isPendenteGrupo=false";
+                    " WHERE Grupo_id="+groupId+" AND Utilizador_username='"+sender+"' AND isPendenteGrupo=false";
 
             ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
             boolean isOnGroup = resultSet.next();
@@ -685,13 +685,14 @@ public class DB {
         try {
             Statement statement = dbConn.createStatement();
             String sqlDeleteQuery = "DELETE FROM Mensagem WHERE Utilizador_username= '" + sender + "' AND id=" + messageID;
-            statement.executeUpdate(sqlDeleteQuery);
-
+            int numRows = statement.executeUpdate(sqlDeleteQuery);
             statement.close();
+            if (numRows>0)
+                return true;
+            return false;
         } catch (SQLException e) {
             return false;
         }
-        return true;
     }
 
     public String getReceiverDeleteMessage(int idMessage){
