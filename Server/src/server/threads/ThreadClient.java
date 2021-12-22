@@ -53,17 +53,17 @@ public class ThreadClient extends Thread {
 
     private int idFilesRequest = 0;
     HashMap<Integer, FileOutputStream> downloadFiles = new HashMap<>();
-    ThreadSendFiles threadSendFiles = new ThreadSendFiles(serverDirectory);
 
+    ThreadSendFiles threadSendFiles;
 
-
-    public ThreadClient(Socket sCli, DB db, String grdsIp, int grdsPort, ThreadPing threadPing) throws IOException {
+    public ThreadClient(Socket sCli, DB db, String grdsIp, int grdsPort, ThreadPing threadPing, ThreadSendFiles threadSendFiles) throws IOException {
         this.sCli = sCli;
         this.db = db;
         this.grdsIp = grdsIp;
         this.grdsPort = grdsPort;
         this.threadPing = threadPing;
         this.socket2grds = new ServerSocket(0);
+        this.threadSendFiles = threadSendFiles;
     }
 
     public void setExit(boolean exit) {
@@ -247,7 +247,6 @@ public class ThreadClient extends Thread {
                         ArrayList<String> info = db.listGroups();
                         oos.writeObject(info);
                     }
-
                     case LEAVE_GROUP -> {
                         Cli2ServLeavGroup cli2ServLeavGroup = (Cli2ServLeavGroup) cliMessage;
 
@@ -398,9 +397,6 @@ public class ThreadClient extends Thread {
                                 fos.close();
                                 downloadFiles.remove(id);
 
-                                if (!threadSendFiles.isAlive()) // If the server never receives a file it never launches this thread to save resources
-                                    threadSendFiles.run();
-
                                 if (cli2ServFile.isSend2group()) {
                                     ArrayList<String> users2notify = db.getGroupUsers(cli2ServFile.getGroupID());
                                     String[] aux = users2notify.toArray(new String[users2notify.size()]);
@@ -424,6 +420,16 @@ public class ThreadClient extends Thread {
                             FileOutputStream fos = downloadFiles.get(idOfFile);
                             fos.write(cli2ServFile.getFilePart());
                         }
+                    }
+                    case GET_FILE -> {
+                        Cli2ServGetFile cli2ServGetFile = (Cli2ServGetFile) cliMessage;
+
+                        String [] aux = cli2ServGetFile.getFilename().split("-");
+                        int messageId = Integer.parseInt(aux[0]);
+
+                        cli2ServGetFile = new Cli2ServGetFile(threadSendFiles.getIp(),threadSendFiles.getPort(),db.getFileDirectory(messageId));
+
+                        oos.writeObject(cli2ServGetFile);
                     }
                 }
                 lastTimeOn = Calendar.getInstance().getTimeInMillis();

@@ -6,6 +6,7 @@ import server.threads.*;
 import server.utils.DB;
 
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.net.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -93,7 +94,6 @@ public class Server {
                     ds.close();
 
                 } catch (IOException | ClassNotFoundException e) {
-                    System.err.println("erro pesadao");
                     e.printStackTrace();
                 }
             }
@@ -111,8 +111,13 @@ public class Server {
         ThreadGrds threadGrds = new ThreadGrds(clients);
         threadGrds.start();
 
-        ThreadAcceptCli threadAcceptCli =  new ThreadAcceptCli(socketReceiveConnections,db,clients,grdsIp,grdsPort, threadPing);
-        threadAcceptCli.run();
+        ThreadSendFiles threadSendFiles = new ThreadSendFiles("./Files/"+ ManagementFactory.getRuntimeMXBean().getName());
+        threadSendFiles.start();
+
+        ThreadAcceptCli threadAcceptCli =  new ThreadAcceptCli(socketReceiveConnections,db,clients,grdsIp,grdsPort, threadPing,threadSendFiles);
+        threadAcceptCli.start();
+
+        System.out.println("Server Ready!");
 
         synchronized (threadActivityClient) {
             try {

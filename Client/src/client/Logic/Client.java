@@ -559,8 +559,17 @@ public class Client {
     }
 
 
+    public boolean downloadFileFrom(String dir)throws IllegalArgumentException, IOException, ClassNotFoundException {
+        Cli2ServGetFile getFile = new Cli2ServGetFile(dir);
 
+        out2serv.writeObject(getFile);
+        getFile = (Cli2ServGetFile) inServ.readObject();
 
+        if (getFile.getFilename() == null) // You sent a file name not recognized by the server
+            throw new IllegalArgumentException();
 
-
+        ThreadReceivedFiles threadReceivedFiles = new ThreadReceivedFiles(getFile.getServerIp(),getFile.getServerPort(),getFile.getFilename(),username);
+        threadReceivedFiles.start();
+        return true;
+    }
 }

@@ -141,6 +141,7 @@ public class Grds {
                             case BD_UPDATE -> {
                                 if (systemReq instanceof Serv2GrdsDBup) {
                                     Serv2GrdsDBup db_update_data = (Serv2GrdsDBup) data;
+
                                     System.out.println("Difusion " + db_update_data.getType());
                                     if (ms != null) {
                                         ByteArrayOutputStream baos = new ByteArrayOutputStream();

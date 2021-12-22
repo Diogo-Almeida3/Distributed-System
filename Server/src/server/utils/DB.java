@@ -586,7 +586,7 @@ public class DB {
             limit = 20;
         try {
             Statement statement = dbConn.createStatement();
-            String sqlQuery = "select  id,Utilizador_username,conteudo,data_envio,data_visualizacao from Mensagem where Utilizador_username='" + sender + "' and Utilizador_username1='" + receiver + "'" +
+            String sqlQuery = "select  * from Mensagem where Utilizador_username='" + sender + "' and Utilizador_username1='" + receiver + "'" +
                     " OR Utilizador_username='" + receiver + "' and Utilizador_username1='" + sender + "' order by data_envio LIMIT " + limit;
             ResultSet resultSet = statement.executeQuery(sqlQuery);
             while (resultSet.next()) {
@@ -606,7 +606,15 @@ public class DB {
 
                 aux.append(username);
                 aux.append(": ");
-                aux.append(resultSet.getString("conteudo"));
+                if(resultSet.getString("tipo").equals("ficheiro")) {
+                    aux.append("[FILE] ");
+                    aux.append(resultSet.getString("id"));
+                    aux.append("-");
+                    aux.append(resultSet.getString("conteudo"));
+                }
+
+                else
+                    aux.append(resultSet.getString("conteudo"));
 
                 messages.add(aux.toString());
             }
@@ -751,7 +759,7 @@ public class DB {
         try {
             Statement statement = dbConn.createStatement();
 
-            String sqlQuery = "SELECT id,Utilizador_username,conteudo FROM Mensagem WHERE id="+id + " AND conteudo='ficheiro'";
+            String sqlQuery = "SELECT id,Utilizador_username,conteudo FROM Mensagem WHERE id="+id + " AND tipo='ficheiro'";
             statement.executeQuery(sqlQuery);
 
             ResultSet resultSet = statement.executeQuery(sqlQuery);

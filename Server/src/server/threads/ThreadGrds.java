@@ -54,9 +54,7 @@ public class ThreadGrds extends Thread {
                 }
             }
             /* Lançar thread para receber o ficheiro quando acaba fecha*/
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
