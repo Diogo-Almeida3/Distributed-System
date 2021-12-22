@@ -1,25 +1,21 @@
-package server.threads;
-
-import server.utils.DB;
+package client.Logic;
 
 import java.io.*;
-import java.lang.management.ManagementFactory;
 import java.net.Socket;
-import java.sql.SQLException;
 
-//CliServ2fiel
+
 public class ThreadReceivedFiles extends Thread {
-    private int idOfFile;
     private String serverIp;
     private int serverPort;
+    private String filename;
+    private String clientDirectory;
 
-    private static final String serverDirectory = "./Files/"+ ManagementFactory.getRuntimeMXBean().getName();
-
-    public ThreadReceivedFiles(String serverIp, int serverPort, int idOfFile) {
-        this.idOfFile = idOfFile;
+    public ThreadReceivedFiles(String serverIp, int serverPort, String filename,String username) {
         this.serverIp = serverIp;
         this.serverPort = serverPort;
-    }
+        this.filename = filename;
+        clientDirectory = "./Files/Client/"+ username +"/Downloads/";
+        }
 
     @Override
     public void run() {
@@ -32,14 +28,12 @@ public class ThreadReceivedFiles extends Thread {
             OutputStream out = socketReceiveFile.getOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(out);
 
-            DB db = new DB();
-            String filename = db.getFileDirectory(idOfFile);
-
             /* Inform the server of which file he wants to transfer */
             oos.writeObject(filename);
 
             /* Create file path filename -> /sender/file*/
-            File f = new File( serverDirectory + filename);
+            String []aux = filename.split("/");
+            File f = new File( clientDirectory + aux[aux.length-1]);
 
             if (f.isFile()) // If this server already has the file then it will not download it
                 return;
@@ -55,7 +49,7 @@ public class ThreadReceivedFiles extends Thread {
             while((tam = in.read(buf)) != -1)
                 fos.write(buf,0,tam);
 
-        } catch (IOException | SQLException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

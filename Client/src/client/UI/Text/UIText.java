@@ -39,10 +39,11 @@ public class UIText implements UIClient {
             }
         }
     }
+
     /*---------------------------------------------------------- CONTACTOS -------------------------------------------------------*/
     private void contactsCommands() {
         System.out.println("Menu Contacts:");
-        switch (Utils.askOption("Messages","Files", "Search User", "Pending Contact Requests", "Contact List", "Add Contact","Refuse Contact","Delete Contact", "Go Back")) {
+        switch (Utils.askOption("Messages", "Files", "Search User", "Pending Contact Requests", "Contact List", "Add Contact", "Refuse Contact", "Delete Contact", "Go Back")) {
             case 1 -> messagesComands();
             case 2 -> filesComands();
             case 3 -> searchUser();
@@ -83,23 +84,23 @@ public class UIText implements UIClient {
         if (logic.addContact(username))
             System.out.println("Contact invitation sent to " + username);
         else
-            System.out.println("User with name"+username+"not Found.");
+            System.out.println("User with name" + username + "not Found.");
     }
 
-    private void refuseContact(){
+    private void refuseContact() {
         String username = Utils.askString("Enter a username:");
-        if(logic.refuseContact(username))
-            System.out.println("Contact refused by:"+username);
+        if (logic.refuseContact(username))
+            System.out.println("Contact refused by:" + username);
         else
-            System.out.println("Error refused contact with name"+ username);
+            System.out.println("Error refused contact with name" + username);
     }
 
     private void deleteContact() {
         String deletContact = Utils.askString("Enter a contact to delete from the list: ");
         if (logic.deleteContact(deletContact))
-            System.out.println("Contact with name "+deletContact+" deleted.");
+            System.out.println("Contact with name " + deletContact + " deleted.");
         else
-            System.out.println("Error deleting contact with name"+ deletContact);
+            System.out.println("Error deleting contact with name" + deletContact);
     }
     /*----------------------------------------------------------- GRUPOS ---------------------------------------------------------*/
 
@@ -117,9 +118,9 @@ public class UIText implements UIClient {
     private void createGroup() {
         String name = Utils.askString("Enter a name of a group: ");
         if (logic.createGroup(name))
-            System.out.println("Group created with name "+name+" success");
+            System.out.println("Group created with name " + name + " success");
         else
-            System.out.println("Error creating group with name "+name);
+            System.out.println("Error creating group with name " + name);
     }
 
     private void joinGroup() {
@@ -149,7 +150,7 @@ public class UIText implements UIClient {
 
     private void adminGroup() {
         System.out.println("Admin Group Menu");
-        switch (Utils.askOption("Rename group", "Accept group member","Refuse group member", "Delete group member", "Delete group", "List waiting members", "Exit")) {
+        switch (Utils.askOption("Rename group", "Accept group member", "Refuse group member", "Delete group member", "Delete group", "List waiting members", "Exit")) {
             case 0 -> {
             }
             case 1 -> rename();
@@ -161,14 +162,14 @@ public class UIText implements UIClient {
         }
     }
 
-    public void rename(){
+    public void rename() {
         if (logic.renameGroup(Utils.askInt("Enter the id group:"), Utils.askString("Enter a new name for group:")))
             System.out.println("Successfully rename group name");
         else
             System.out.println("Failed to rename group name");
     }
 
-    public void acceptanceGroupMember(){
+    public void acceptanceGroupMember() {
         String name = Utils.askString("Enter the username of the member to add: ");
         if (logic.acceptanceGroupMember(Utils.askInt("Enter the id group: "), name))
             System.out.println("Sucessfully add member with name " + name);
@@ -176,7 +177,7 @@ public class UIText implements UIClient {
             System.out.println("Failed to add member with name " + name);
     }
 
-    public void refuseGroupMember(){
+    public void refuseGroupMember() {
         String name = Utils.askString("Enter the username of the member to refuse:");
         if (logic.refuseGroupMember(Utils.askInt("Enter the id group: "), name))
             System.out.println("Sucessfully refuse member with name " + name);
@@ -184,7 +185,7 @@ public class UIText implements UIClient {
             System.out.println("Failed to refuse member with name " + name);
     }
 
-    public void deleteGroupMember(){
+    public void deleteGroupMember() {
         String name = Utils.askString("Enter the username of the member to be deleted: ");
         if (logic.deleteGroupMember(Utils.askInt("Enter the id group: "), name))
             System.out.println("Sucessfully remove member with name " + name);
@@ -192,7 +193,7 @@ public class UIText implements UIClient {
             System.out.println("Failed to remove member with name " + name);
     }
 
-    public void deleteGroup(){
+    public void deleteGroup() {
         int id = Utils.askInt("Enter the id group to delete: ");
         if (logic.deleteGroup(id))
             System.out.println("Sucessfully remove group with id " + id);
@@ -200,7 +201,7 @@ public class UIText implements UIClient {
             System.out.println("Failed to delete group with id " + id);
     }
 
-    public void listWaitingMembers(){
+    public void listWaitingMembers() {
         String list = logic.listWaitingMembers(Utils.askInt("Enter the id group to list:"));
         if (list != null)
             System.out.println(list);
@@ -210,19 +211,21 @@ public class UIText implements UIClient {
 
     /*--------------------------------------------------------- MENSAGENS--------------------------------------------------------*/
     private void messagesComands() {
-        int op = Utils.askOption("Send Messages","Delete Messages","See users messages","See groups messages","Go Back");
+        int op = Utils.askOption("Send Messages", "Delete Messages", "See users messages", "See groups messages", "Go Back");
         switch (op) {
             case 1 -> sendMessages();
             case 2 -> deleteMessages();
             case 3 -> seeUsersMessages();
             case 4 -> seeGroupsMessages();
-            default ->{ return;}
+            default -> {
+                return;
+            }
         }
     }
 
     private void sendMessages() {
         boolean success = false;
-        int op = Utils.askOption("Send to user","Send to group","Go Back");
+        int op = Utils.askOption("Send to user", "Send to group", "Go Back");
         switch (op) {
             case 1 -> success = logic.sendMessageTo(Utils.askString("Message to: "), Utils.askString("Message:\n\t"));
             case 2 -> success = logic.sendMessageTo(Utils.askInt("Group ID: "), Utils.askString("Message:\n\t"));
@@ -232,36 +235,37 @@ public class UIText implements UIClient {
         else
             System.out.println("An error occurred while sending the message!");
     }
+
     private void deleteMessages() {
-        if(logic.deleteMessageTo(Utils.askInt("Delete Message with ID :")))
+        if (logic.deleteMessageTo(Utils.askInt("Delete Message with ID :")))
             System.out.println("Your message was deleted sucessfully");
         else
             System.out.println("An error occurred while deleting the message");
     }
 
-    private void seeUsersMessages(){
+    private void seeUsersMessages() {
         ArrayList<String> names;
         System.out.println("Choose the contact that you want to view the messages: ");
         names = logic.getContactsWithMessages();
         names.add("Go Back");
         int op = Utils.askOption(names.toArray(new String[names.size()]));
         if (op == 0) return;
-        String name = names.get(op-1);
-        System.out.println("Messages from " +name +":\n");
+        String name = names.get(op - 1);
+        System.out.println("Messages from " + name + ":\n");
         for (String msg : logic.getMessagesFrom(name))
             System.out.println(msg);
         System.out.println("\n");
     }
 
-    private void seeGroupsMessages(){
+    private void seeGroupsMessages() {
         ArrayList<String> names;
         System.out.println("Choose the group that you want to view the messages: ");
         names = logic.getGroupsWithMessages();
         names.add("Go Back");
         int op = Utils.askOption(names.toArray(new String[names.size()]));
         if (op == 0) return;
-        int group = Integer.parseInt(names.get(op-1).substring(6));
-        System.out.println("Messages from group " +group +":\n");
+        int group = Integer.parseInt(names.get(op - 1).substring(6));
+        System.out.println("Messages from group " + group + ":\n");
         for (String msg : logic.getMessagesFromGroup(group))
             System.out.println(msg);
         System.out.println("\n");
@@ -269,32 +273,32 @@ public class UIText implements UIClient {
 
     /*--------------------------------------------------------- Ficheiros --------------------------------------------------------*/
     private void filesComands() {
-        int op = Utils.askOption("Send File","Delete File","See users Files","See groups Files","Go Back");
+        int op = Utils.askOption("Send File", "Download File", "Delete File", "Go Back");
         switch (op) {
             case 1 -> sendFiles();
-            case 2 -> deleteFiles();
-            case 3 -> seeUsersFiles();
-            case 4 -> seeGroupsFiles();
-            default ->{ return;}
+            case 2 -> downloadFiles();
+            case 3 -> deleteFiles();
+            default -> {
+                return;
+            }
         }
     }
 
     private void sendFiles() {
         boolean success = false;
-        int op = Utils.askOption("Send to user","Send to group","Go Back");
+        int op = Utils.askOption("Send to user", "Send to group", "Go Back");
         switch (op) {
             case 1 -> {
                 try {
-                    success = logic.sendFileTo(Utils.askString("File to: "), Utils.askString("File name:"));
+                    success = logic.sendFileTo(Utils.askString("File to: "), Utils.askString("File name: "));
                 } catch (IllegalArgumentException e) {
-                    System.out.println("Directory is not valid try again..");
+                    System.out.println("Directory is not valid, try again..");
                     return;
-                }
-                catch (IOException | ClassNotFoundException e) {
+                } catch (IOException | ClassNotFoundException e) {
                     System.err.println("An error has occurred - " + e.getMessage());
                 }
             }
-            case 2 -> success = logic.sendFileTo(Utils.askInt("Group ID: "), Utils.askString("File name:"));
+            case 2 -> success = logic.sendFileTo(Utils.askInt("Group ID: "), Utils.askString("File name: "));
         }
         if (success)
             System.out.println("Your file was sent successfully!");
@@ -302,14 +306,30 @@ public class UIText implements UIClient {
             System.out.println("An error occurred while sending the message!");
     }
 
+    private void downloadFiles() {
+        boolean success = false;
+        int op = Utils.askOption("Download from user", "Download from group", "Go Back");
+        switch (op) {
+            case 1 -> {
+                try {
+                    success = logic.downloadFileFrom(Utils.askString("Filename: "));
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Filename is not valid,try again..");
+                    return;
+                } catch (IOException | ClassNotFoundException e) {
+                    System.err.println("An error has occurred - " + e.getMessage());
+                    return;
+                }
+            }
+            //case 2 -> success = logic.downloadFileFrom(Utils.askInt("Group ID: "), Utils.askString("File name:"));
+        }
+        if (success)
+            System.out.println("Your file was download successfully!");
+    }
+
     private void deleteFiles() {
     }
 
-    private void seeUsersFiles() {
-    }
-
-    private void seeGroupsFiles() {
-    }
 
     /*---------------------------------------------------------- PERFIL UTILIZADOR -------------------------------------------------------*/
     private void profileCommands() {

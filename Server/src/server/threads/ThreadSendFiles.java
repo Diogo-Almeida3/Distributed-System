@@ -14,7 +14,7 @@ public class ThreadSendFiles extends Thread {
     }
 
     public String getIp() {
-        return null;
+        return server.getInetAddress().getHostAddress();
     }
 
     public int getPort() {
@@ -23,8 +23,6 @@ public class ThreadSendFiles extends Thread {
 
     @Override
     public void run() {
-        //TCP faz coisas tatataat
-
         try {
             /* Create automatic TCP */
             server = new ServerSocket(0);
