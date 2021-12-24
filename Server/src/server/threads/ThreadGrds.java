@@ -7,14 +7,18 @@ import data.serv2grds.Serv2GrdsDBup;
 
 import javax.print.attribute.standard.MediaSize;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.lang.management.ManagementFactory;
 import java.net.*;
 import java.util.ArrayList;
 
 public class ThreadGrds extends Thread {
 
     private ArrayList<ThreadClient> clients;
+
+    private static final String serverDirectory = "./Files/"+ ManagementFactory.getRuntimeMXBean().getName();
 
     public ThreadGrds(ArrayList<ThreadClient> clients) {
         this.clients = clients;
@@ -42,9 +46,12 @@ public class ThreadGrds extends Thread {
                 ObjectInputStream ois = new ObjectInputStream(bais);
                 Serv2GrdsDBup data = (Serv2GrdsDBup) ois.readObject();
 
-                if(data.getType() == Notification.NEW_FILE_AVAILABLE){
+                if(data.getType() == Notification.NEW_FILE_AVAILABLE) {
                     ThreadReceivedFiles threadReceivedFiles =  new ThreadReceivedFiles(data.getServerIp(),data.getServerPort(),data.getFileId());
                     threadReceivedFiles.run();
+                } else if (data.getType() == Notification.FILE_DELETE) {
+                    File f = new File(serverDirectory +  data.getExtra());
+                    f.delete();
                 }
 
                 for (ThreadClient client : clients) {

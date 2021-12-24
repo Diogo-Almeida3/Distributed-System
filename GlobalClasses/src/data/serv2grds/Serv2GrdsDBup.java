@@ -13,6 +13,8 @@ public class Serv2GrdsDBup extends Serv2Grds {
     private int ServerPort = 0;
     private int fileId = -1;
 
+    private String extra;
+
     public Serv2GrdsDBup(Notification type, String ... users2add) {
         super(Request.BD_UPDATE);
         if (users2add != null)
@@ -62,5 +64,13 @@ public class Serv2GrdsDBup extends Serv2Grds {
 
     public ArrayList<String> getUsers() {
         return users;
+    }
+
+    public String getExtra() {
+        return extra;
+    }
+
+    public void putExtra(String extra) {
+        this.extra = extra;
     }
 }

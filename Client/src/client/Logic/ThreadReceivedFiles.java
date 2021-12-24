@@ -35,7 +35,7 @@ public class ThreadReceivedFiles extends Thread {
             String []aux = filename.split("/");
             File f = new File( clientDirectory + aux[aux.length-1]);
 
-            if (f.isFile()) // If this server already has the file then it will not download it
+            if (f.isFile()) // If this client already has the file then it will not download it
                 return;
 
             f.getParentFile().mkdirs();
@@ -46,11 +46,15 @@ public class ThreadReceivedFiles extends Thread {
             /* Transfer the file*/
             byte [] buf = new byte[512];
             int tam;
-            while((tam = in.read(buf)) != -1)
+            while((tam = in.read(buf)) != -1) // TODO bloqueia aqui
                 fos.write(buf,0,tam);
+
+            oos.close();
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
     }
 }

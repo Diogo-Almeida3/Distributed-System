@@ -21,9 +21,10 @@ public class Cli2ServGetMsg extends Cli2Serv {
         this.request = request;
     }
 
-    public Cli2ServGetMsg(int groupId, String receiver) { // To get messages sent in the group
+    public Cli2ServGetMsg(String sender, int groupId, String receiver) { // To get messages sent in the group
         super(RequestType.GET_MESSAGES);
         this.receiver = receiver;
+        this.sender = sender;
         this.groupId = groupId;
         request = typeRequest.GET_MSG_FROM_GROUP;
     }

@@ -630,21 +630,43 @@ public class DB {
         return messages;
     }
 
-    public ArrayList<String> getMessagesFromGroup(int groupId, int limit) {
+    public ArrayList<String> getMessagesFromGroup(String sender,int groupId, int limit) {
         ArrayList<String> messages = new ArrayList<>();
         if (limit < 1)
             limit = 20;
         try {
             Statement statement = dbConn.createStatement();
-            String sqlQuery = "select id,Utilizador_username,conteudo from Mensagem where Grupo_id =" + groupId + " order by data_envio LIMIT " + limit;
+            String sqlQuery = "select * from Mensagem where Grupo_id =" + groupId + " order by data_envio LIMIT " + limit;
             ResultSet resultSet = statement.executeQuery(sqlQuery);
             while (resultSet.next()) {
                 StringBuilder aux = new StringBuilder();
                 aux.append("[" + resultSet.getString("id") + "] ");
-                aux.append(resultSet.getString("Utilizador_username") + ": ");
-                aux.append(resultSet.getString("conteudo"));
+                String username = resultSet.getString("Utilizador_username");
+
+                if (!username.equals(sender)) {
+                    String dateOfView = resultSet.getString("data_visualizacao");
+                    if (dateOfView == null)
+                        aux.append("[Delivered]\t");
+                    else
+                        aux.append("[View at " + dateOfView + "]\t");
+                } else
+                    aux.append("[Sent at " + resultSet.getString("data_envio") + "]\t");
+
+                aux.append(username);
+                aux.append(": ");
+                if(resultSet.getString("tipo").equals("ficheiro")) {
+                    aux.append("[FILE] ");
+                    aux.append(resultSet.getString("id"));
+                    aux.append("-");
+                    aux.append(resultSet.getString("conteudo"));
+                }
+
+                else
+                    aux.append(resultSet.getString("conteudo"));
+
                 messages.add(aux.toString());
             }
+
 
             //Update messages view date
             sqlQuery = "UPDATE Mensagem SET data_visualizacao = '" + new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis()) + "' WHERE data_visualizacao IS NULL AND Grupo_id =" + groupId;
@@ -755,17 +777,52 @@ public class DB {
         return fileID;
     }
 
+    public int sendFile(String sender, int group, String filename) {
+        int fileID = -1;
+        try {
+            Statement statement = dbConn.createStatement();
+            String sqlQueryCheck = "SELECT * FROM Grupo_has_Utilizador" +
+                    " WHERE isPendenteGrupo = FALSE AND " +
+                    "Utilizador_username = '" + sender + "' AND Grupo_id=" + group;
+
+            ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
+            boolean isContact = resultSet.next();
+
+            if (isContact) {
+                String sqlQueryUpdate = "INSERT INTO Mensagem (data_envio, Utilizador_username, Grupo_id, Utilizador_username1, data_visualizacao, tipo, conteudo)";
+                java.sql.Timestamp date = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
+                date.setNanos(0);
+                sqlQueryUpdate += " VALUES ('" + date + "','" + sender + "',"+group+",null,null,'ficheiro','" + filename + "')";
+                statement.executeUpdate(sqlQueryUpdate);
+
+                String sqlQueryMsgId = "SELECT id FROM Mensagem where Utilizador_username='"+sender +"' AND Grupo_id="+ group +" AND data_envio='" + date+ "'";
+                ResultSet resultSet1 = statement.executeQuery(sqlQueryMsgId);
+
+                if(resultSet1.next())
+                    fileID = resultSet1.getInt("id");
+            }
+            statement.close();
+        } catch (SQLException e) {
+            return -1;
+        }
+        return fileID;
+    }
+
     public String getFileDirectory(int id) {
         try {
             Statement statement = dbConn.createStatement();
 
-            String sqlQuery = "SELECT id,Utilizador_username,conteudo FROM Mensagem WHERE id="+id + " AND tipo='ficheiro'";
+            String sqlQuery = "SELECT * FROM Mensagem WHERE id="+id + " AND tipo='ficheiro'";
             statement.executeQuery(sqlQuery);
 
             ResultSet resultSet = statement.executeQuery(sqlQuery);
 
             if(resultSet.next()) {
-                String dir = "/" +resultSet.getString("Utilizador_username")+"/"+id+"-"+resultSet.getString("conteudo");
+                String dir;
+                if (resultSet.getString("Utilizador_username1") == null) // Is Group
+                    dir = "/Group-" +resultSet.getString("Grupo_id")+"/"+id+"-"+resultSet.getString("conteudo");
+                else // Is user
+                    dir = "/" +resultSet.getString("Utilizador_username")+"/"+id+"-"+resultSet.getString("conteudo");
                 statement.close();
                 return dir;
             }
@@ -773,5 +830,40 @@ public class DB {
             return null;
         }
         return null;
+    }
+
+    public String getReceiverDeleteFile(int idFile) {
+        try{
+            Statement statement = dbConn.createStatement();
+
+            // Get data to notify users
+            String sqlQuery = "SELECT Utilizador_username1,Grupo_id FROM Mensagem WHERE id="+ idFile;
+            ResultSet resultSet = statement.executeQuery(sqlQuery);
+            resultSet.next();
+
+            String receiver = resultSet.getString("Utilizador_username1");
+
+            if (receiver == null) { // Is a group
+                receiver = "Group:" + resultSet.getString("Grupo_id");
+            }
+            return receiver;
+        } catch (SQLException e) {
+            return null;
+        }
+    }
+
+    public boolean deleteFile(String username, int idFile) {
+        try {
+            Statement statement = dbConn.createStatement();
+            String sqlDeleteQuery = "DELETE FROM Mensagem WHERE Utilizador_username= '" + username + "' AND id=" + idFile;
+            int numRows = statement.executeUpdate(sqlDeleteQuery);
+            statement.close();
+            if (numRows>0)
+                return true;
+            return false;
+        } catch (SQLException e) {
+            return false;
+        }
+
     }
 }

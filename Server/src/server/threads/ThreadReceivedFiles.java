@@ -55,6 +55,9 @@ public class ThreadReceivedFiles extends Thread {
             while((tam = in.read(buf)) != -1)
                 fos.write(buf,0,tam);
 
+            oos.close();
+            fos.flush();
+            fos.close();
         } catch (IOException | SQLException e) {
             e.printStackTrace();
         }

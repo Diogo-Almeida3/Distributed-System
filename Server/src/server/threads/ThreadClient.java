@@ -305,7 +305,7 @@ public class ThreadClient extends Thread {
 
                             case GET_MSG_FROM_USER ->  oos.writeObject(db.getMessages(request.getSender(), request.getReceiver(),30));
 
-                            case GET_MSG_FROM_GROUP -> oos.writeObject(db.getMessagesFromGroup(request.getGroupId(),30));
+                            case GET_MSG_FROM_GROUP -> oos.writeObject(db.getMessagesFromGroup(request.getSender(),request.getGroupId(),30));
                         }
                     }
                     case ADMIN_GROUP -> {
@@ -411,9 +411,23 @@ public class ThreadClient extends Thread {
                         } else if (id == -1){ // Create directory for the file and add to hashmap
                             String sender = cli2ServFile.getSender();
                             String fileName = cli2ServFile.getFilename();
-                            int idOfFile = db.sendFile(sender,cli2ServFile.getReceiver(),cli2ServFile.getFilename());
+
+                            int idOfFile;
+                            if (cli2ServFile.isSend2group())
+                                idOfFile = db.sendFile(sender,cli2ServFile.getGroupID(),cli2ServFile.getFilename());
+                            else
+                                idOfFile = db.sendFile(sender,cli2ServFile.getReceiver(),cli2ServFile.getFilename());
+
                             oos.writeObject(idOfFile);
-                            File file = new File(serverDirectory +'/'+sender + "/"+idOfFile+"-"+fileName);
+
+                            File file;
+
+                            if (cli2ServFile.isSend2group()) {
+                                file = new File(serverDirectory +"/Group-"+ cli2ServFile.getGroupID() + "/"+idOfFile+"-"+fileName);
+                            } else {
+                                file = new File(serverDirectory +'/'+sender + "/"+idOfFile+"-"+fileName);
+                            }
+
                             file.getParentFile().mkdirs();
                             file.createNewFile();
                             downloadFiles.put(idOfFile, new FileOutputStream(file));
@@ -430,6 +444,29 @@ public class ThreadClient extends Thread {
                         cli2ServGetFile = new Cli2ServGetFile(threadSendFiles.getIp(),threadSendFiles.getPort(),db.getFileDirectory(messageId));
 
                         oos.writeObject(cli2ServGetFile);
+                    }
+                    case DELETE_FILE ->  {
+                        Cli2ServDelFile delFile =(Cli2ServDelFile) cliMessage;
+
+                        String name = db.getReceiverDeleteFile(delFile.getIdFile()); // Gets the receiver's name or the id of the group to whom the file was sent
+                        String dirOfFile = db.getFileDirectory(delFile.getIdFile());
+                        if(db.deleteFile(delFile.getUsername(),delFile.getIdFile())) { // Delete file
+                            if (name.startsWith("Group:")) { // Is group
+                                int groupId = Integer.parseInt(name.substring(6));
+                                Serv2GrdsDBup serv2GrdsDBup = new Serv2GrdsDBup(Notification.FILE_DELETE, db.getGroupUsers(groupId));
+                                serv2GrdsDBup.putExtra(dirOfFile);
+                                send2GRDS(serv2GrdsDBup);
+                            }
+                            else { // Is user
+                                Serv2GrdsDBup serv2GrdsDBup = new Serv2GrdsDBup(Notification.FILE_DELETE,name);
+                                serv2GrdsDBup.putExtra(dirOfFile);
+                                send2GRDS(serv2GrdsDBup);
+                            }
+                            oos.writeObject(true);
+                        }
+                        else {
+                            oos.writeObject(false);
+                        }
                     }
                 }
                 lastTimeOn = Calendar.getInstance().getTimeInMillis();

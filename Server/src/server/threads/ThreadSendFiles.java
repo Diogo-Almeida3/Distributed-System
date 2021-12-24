@@ -45,6 +45,7 @@ public class ThreadSendFiles extends Thread {
                     out.write(buffer, 0, tam);
                 }
             }
+
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }

@@ -285,49 +285,43 @@ public class UIText implements UIClient {
     }
 
     private void sendFiles() {
-        boolean success = false;
         int op = Utils.askOption("Send to user", "Send to group", "Go Back");
-        switch (op) {
-            case 1 -> {
-                try {
-                    success = logic.sendFileTo(Utils.askString("File to: "), Utils.askString("File name: "));
-                } catch (IllegalArgumentException e) {
-                    System.out.println("Directory is not valid, try again..");
-                    return;
-                } catch (IOException | ClassNotFoundException e) {
-                    System.err.println("An error has occurred - " + e.getMessage());
-                }
+
+        try {
+            switch (op) {
+                case 1 -> logic.sendFileTo(Utils.askString("File to: "), Utils.askString("File URL: "));
+                case 2 -> logic.sendFileTo(Utils.askInt("Group ID: "), Utils.askString("File name: "));
             }
-            case 2 -> success = logic.sendFileTo(Utils.askInt("Group ID: "), Utils.askString("File name: "));
+        } catch (IllegalArgumentException e) {
+            System.out.println("Directory is not valid, try again..");
+            return;
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("An error has occurred - " + e.getMessage());
         }
-        if (success)
-            System.out.println("Your file was sent successfully!");
-        else
-            System.out.println("An error occurred while sending the message!");
+        System.out.println("Your file is being sent in the background...");
     }
 
     private void downloadFiles() {
-        boolean success = false;
-        int op = Utils.askOption("Download from user", "Download from group", "Go Back");
-        switch (op) {
-            case 1 -> {
-                try {
-                    success = logic.downloadFileFrom(Utils.askString("Filename: "));
-                } catch (IllegalArgumentException e) {
-                    System.out.println("Filename is not valid,try again..");
-                    return;
-                } catch (IOException | ClassNotFoundException e) {
-                    System.err.println("An error has occurred - " + e.getMessage());
-                    return;
-                }
-            }
-            //case 2 -> success = logic.downloadFileFrom(Utils.askInt("Group ID: "), Utils.askString("File name:"));
+        String name = Utils.askString("Filename:");
+        try {
+            if(logic.downloadFileFrom(name))
+                System.out.println("File with name "+name+" downloaded in background");
+            else
+                System.out.println("Failed to download the file with the name"+ name);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Filename is not valid,try again..");
+            return;
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("An error has occurred - " + e.getMessage());
         }
-        if (success)
-            System.out.println("Your file was download successfully!");
     }
 
     private void deleteFiles() {
+        int id = Utils.askInt("Delete file with ID: ");
+        if (logic.deleteFileto(id))
+            System.out.println("Your file with "+id+" was deleted sucessfully");
+        else
+            System.out.println("An error occurred while deleting the file with id "+ id);
     }
 
 
@@ -364,10 +358,13 @@ public class UIText implements UIClient {
 
     /*---------------------------------------------------- LOGIN E REGISTO-------------------------------------------------------*/
     private void menuLoginReg() {
-        boolean success = false;
+        boolean success;
         System.out.println("Menu:");
         switch (Utils.askOption("Login", "Register", "Exit")) {
-            case 0 -> exit = true;
+            case 0 -> {
+                exit = true;
+                logic.exitServer();
+            }
             case 1 -> {
                 int attempts = 0;
                 do {

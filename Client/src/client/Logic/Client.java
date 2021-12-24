@@ -306,7 +306,6 @@ public class Client {
 
     public boolean joinGroup(int groupId) {
         if(!isLogged) return false;
-        //todo Ver esta merda porque tem de mandar um numero
         Cli2ServInvGroup creatGroup = new Cli2ServInvGroup(groupId);
         boolean success = false;
         try {
@@ -523,7 +522,7 @@ public class Client {
     }
 
     public ArrayList<String> getMessagesFromGroup(int groupId) {
-        Cli2ServGetMsg send = new Cli2ServGetMsg(groupId,username);
+        Cli2ServGetMsg send = new Cli2ServGetMsg(username,groupId,username);
         try {
             out2serv.writeObject(send);
             return (ArrayList<String>) inServ.readObject();
@@ -540,21 +539,19 @@ public class Client {
             throw new IllegalArgumentException("This directory is not valid!");
 
         ThreadSendFile threadSendFile = new ThreadSendFile(out2serv,inServ,username,receiver,f);
-        threadSendFile.run();
+        threadSendFile.start();
         return true;
     }
 
 
     public boolean sendFileTo(int idGroup,String dir){
-        /*
         File f = new File(dir);
 
         if(!f.isFile())
             throw new IllegalArgumentException("This directory is not valid!");
 
         ThreadSendFile threadSendFileGroup = new ThreadSendFile(out2serv,inServ,username,idGroup,f);
-        threadSendFileGroup.run();
-         */
+        threadSendFileGroup.start();
         return false;
     }
 
@@ -572,4 +569,21 @@ public class Client {
         threadReceivedFiles.start();
         return true;
     }
+
+    public boolean deleteFileto(int idFile) {
+        if(!isLogged) return false;
+
+        Cli2ServDelFile delFile = new Cli2ServDelFile(username,idFile);
+        boolean success = false;
+        try{
+            out2serv.writeObject(delFile);
+            success = (boolean) inServ.readObject();
+        }catch (IOException | ClassNotFoundException e){
+            System.err.println("Error on delete file with id "+idFile+" in communication with server!");
+        }
+        return success;
+
+    }
+
+
 }
