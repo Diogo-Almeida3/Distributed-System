@@ -44,6 +44,10 @@ public class ThreadSendFiles extends Thread {
                     int tam = fileInputStream.read(buffer);
                     out.write(buffer, 0, tam);
                 }
+                out.write(new byte[0],0,0);
+                out.flush();
+                out.close();
+                fileInputStream.close();
             }
 
         } catch (IOException | ClassNotFoundException e) {

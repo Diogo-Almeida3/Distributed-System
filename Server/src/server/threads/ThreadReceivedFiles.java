@@ -48,14 +48,14 @@ public class ThreadReceivedFiles extends Thread {
             f.createNewFile();
 
             FileOutputStream fos = new FileOutputStream(f);
-
             /* Transfer the file*/
             byte [] buf = new byte[512];
             int tam;
-            while((tam = in.read(buf)) != -1)
+            System.err.println("A receber");
+            while((tam = in.read(buf)) > 0) { // Todo não sai deste ciclo
                 fos.write(buf,0,tam);
-
-            oos.close();
+            }
+            System.err.println("Ficheiro recebido com sucesso");
             fos.flush();
             fos.close();
         } catch (IOException | SQLException e) {

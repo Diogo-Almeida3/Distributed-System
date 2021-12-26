@@ -48,7 +48,7 @@ public class ThreadGrds extends Thread {
 
                 if(data.getType() == Notification.NEW_FILE_AVAILABLE) {
                     ThreadReceivedFiles threadReceivedFiles =  new ThreadReceivedFiles(data.getServerIp(),data.getServerPort(),data.getFileId());
-                    threadReceivedFiles.run();
+                    threadReceivedFiles.start();
                 } else if (data.getType() == Notification.FILE_DELETE) {
                     File f = new File(serverDirectory +  data.getExtra());
                     f.delete();
@@ -60,7 +60,6 @@ public class ThreadGrds extends Thread {
                             client.notification(data.getType());
                 }
             }
-            /* Lançar thread para receber o ficheiro quando acaba fecha*/
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }

@@ -221,8 +221,8 @@ public class Grds {
             throw new OperationNotSupportedException();
         ServerData servMin = servers.get(0);
         int minCli = servMin.getNumCli();
-        for (ServerData serv : servers) { //2 Servidores -> 1º -> 1 cli | 2ª -> 0 cli
-            if (serv.getNumCli() < minCli && serv.getNumTimeouts() < 1) { //O nClientes no server for menor que o do server atribuido && nao tiver timeouts
+        for (ServerData serv : servers) {
+            if (serv.getNumCli() < minCli && serv.getNumTimeouts() < 1) { //The nClients on the server is less than that of the assigned server && there are no timeouts
                 minCli = serv.getNumCli();
                 servMin = serv;
             }

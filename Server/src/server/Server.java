@@ -118,9 +118,6 @@ public class Server {
         ThreadAcceptCli threadAcceptCli =  new ThreadAcceptCli(socketReceiveConnections,db,clients,grdsIp,grdsPort, threadPing,threadSendFiles);
         threadAcceptCli.start();
 
-        File f = new File(serverDirectory);
-        f.mkdirs();
-        f.deleteOnExit();
 
         System.out.println("Server Ready!");
 

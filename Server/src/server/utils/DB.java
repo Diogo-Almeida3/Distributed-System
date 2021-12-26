@@ -749,15 +749,8 @@ public class DB {
         int fileID = -1;
         try {
             Statement statement = dbConn.createStatement();
-            String sqlQueryCheck = "SELECT * FROM Utilizador_has_Utilizador" +
-                    " WHERE isPendenteContacto = FALSE AND " +
-                    "(Utilizador_username = '" + sender + "' AND Utilizador_username1 = '" + receiver + "' " +
-                    "OR Utilizador_username = '" + receiver + "' AND Utilizador_username1 = '" + sender + "')";
 
-            ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
-            boolean isContact = resultSet.next();
-
-            if (isContact) {
+            if (isContact(sender,receiver)) {
                 String sqlQueryUpdate = "INSERT INTO Mensagem (data_envio, Utilizador_username, Grupo_id, Utilizador_username1, data_visualizacao, tipo, conteudo)";
                 java.sql.Timestamp date = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
                 date.setNanos(0);
@@ -781,14 +774,8 @@ public class DB {
         int fileID = -1;
         try {
             Statement statement = dbConn.createStatement();
-            String sqlQueryCheck = "SELECT * FROM Grupo_has_Utilizador" +
-                    " WHERE isPendenteGrupo = FALSE AND " +
-                    "Utilizador_username = '" + sender + "' AND Grupo_id=" + group;
 
-            ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
-            boolean isContact = resultSet.next();
-
-            if (isContact) {
+            if (isContact(sender,group)) {
                 String sqlQueryUpdate = "INSERT INTO Mensagem (data_envio, Utilizador_username, Grupo_id, Utilizador_username1, data_visualizacao, tipo, conteudo)";
                 java.sql.Timestamp date = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
                 date.setNanos(0);
@@ -865,5 +852,38 @@ public class DB {
             return false;
         }
 
+    }
+
+    public boolean isContact(String name1, String name2) {
+        Statement statement = null;
+        try {
+            statement = dbConn.createStatement();
+
+            String sqlQueryCheck = "SELECT * FROM Utilizador_has_Utilizador" +
+                    " WHERE isPendenteContacto = FALSE AND " +
+                    "(Utilizador_username = '" + name1 + "' AND Utilizador_username1 = '" + name2 + "' " +
+                    "OR Utilizador_username = '" + name2 + "' AND Utilizador_username1 = '" + name1 + "')";
+
+            ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
+            return resultSet.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean isContact(String name1, int group) {
+        try {
+            Statement statement = dbConn.createStatement();
+            String sqlQueryCheck = "SELECT * FROM Grupo_has_Utilizador" +
+                    " WHERE isPendenteGrupo = FALSE AND " +
+                    "Utilizador_username = '" + name1 + "' AND Grupo_id=" + group;
+
+            ResultSet resultSet = statement.executeQuery(sqlQueryCheck);
+            return resultSet.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

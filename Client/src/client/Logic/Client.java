@@ -7,6 +7,7 @@ import data.cli2serv.*;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Client {
 
@@ -489,6 +490,7 @@ public class Client {
     }
 
     public ArrayList<String> getContactsWithMessages() {
+        if(!isLogged) return null;
         Cli2ServGetMsg send = new Cli2ServGetMsg(username, Cli2ServGetMsg.typeRequest.GET_CONTACTS);
         try {
             out2serv.writeObject(send);
@@ -500,6 +502,7 @@ public class Client {
     }
 
     public ArrayList<String> getGroupsWithMessages() {
+        if(!isLogged) return null;
         Cli2ServGetMsg send = new Cli2ServGetMsg(username, Cli2ServGetMsg.typeRequest.GET_GROUPS);
         try {
             out2serv.writeObject(send);
@@ -511,6 +514,7 @@ public class Client {
     }
 
     public ArrayList<String> getMessagesFrom(String sender) {
+        if(!isLogged) return null;
         Cli2ServGetMsg send = new Cli2ServGetMsg(sender,username);
         try {
             out2serv.writeObject(send);
@@ -522,6 +526,7 @@ public class Client {
     }
 
     public ArrayList<String> getMessagesFromGroup(int groupId) {
+        if(!isLogged) return null;
         Cli2ServGetMsg send = new Cli2ServGetMsg(username,groupId,username);
         try {
             out2serv.writeObject(send);
@@ -533,10 +538,14 @@ public class Client {
     }
 
     public boolean sendFileTo(String receiver, String dir) throws IllegalArgumentException, IOException, ClassNotFoundException {
+        if(!isLogged) return false;
         File f = new File(dir);
 
         if (!f.isFile()) // Test if the directory sent by the user is valid
             throw new IllegalArgumentException("This directory is not valid!");
+
+        if (!isContact(username,receiver))
+            throw new IllegalArgumentException("The contact name is not valid!");
 
         ThreadSendFile threadSendFile = new ThreadSendFile(out2serv,inServ,username,receiver,f);
         threadSendFile.start();
@@ -545,10 +554,14 @@ public class Client {
 
 
     public boolean sendFileTo(int idGroup,String dir){
+        if(!isLogged) return false;
         File f = new File(dir);
 
         if(!f.isFile())
             throw new IllegalArgumentException("This directory is not valid!");
+
+        if (!isContact(username,idGroup))
+            throw new IllegalArgumentException("The group is not valid!");
 
         ThreadSendFile threadSendFileGroup = new ThreadSendFile(out2serv,inServ,username,idGroup,f);
         threadSendFileGroup.start();
@@ -557,6 +570,8 @@ public class Client {
 
 
     public boolean downloadFileFrom(String dir)throws IllegalArgumentException, IOException, ClassNotFoundException {
+        if(!isLogged) return false;
+
         Cli2ServGetFile getFile = new Cli2ServGetFile(dir);
 
         out2serv.writeObject(getFile);
@@ -585,5 +600,22 @@ public class Client {
 
     }
 
+    public boolean isContact(String name1, String name2) {
+        try {
+            out2serv.writeObject(new Cli2ServCkContact(name1,name2));
+            return (boolean) inServ.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    public boolean isContact(String name1, int group) {
+        try {
+            out2serv.writeObject(new Cli2ServCkContact(name1,group));
+            return (boolean) inServ.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            return false;
+        }
+    }
 
 }

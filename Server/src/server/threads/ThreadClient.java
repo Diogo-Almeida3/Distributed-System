@@ -183,6 +183,13 @@ public class ThreadClient extends Thread {
                             setExit(true);
                         }
                     }
+                    case CK_CONTACT -> {
+                        Cli2ServCkContact names = (Cli2ServCkContact) cliMessage;
+                        if (names.isCkGroup())
+                            oos.writeObject(db.isContact(names.getName1(),names.getGroupId()));
+                        else
+                            oos.writeObject(db.isContact(names.getName1(),names.getName2()));
+                    }
                     case SEARCH_USER -> {
                         Cli2ServSearch search = (Cli2ServSearch) cliMessage;
                         ArrayList<String> info = db.searchUser(search.getUsername());
