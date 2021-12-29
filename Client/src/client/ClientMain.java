@@ -6,6 +6,7 @@ import client.UI.Text.UIText;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.util.Scanner;
 
 public class ClientMain {
     public static void main(String[] args) {

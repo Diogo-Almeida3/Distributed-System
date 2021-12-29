@@ -3,20 +3,23 @@ package data.serv2cli;
 import Constants.Notification;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 
 public class Serv2Cli implements Serializable {
 
-    private Notification notification = null;
-    private ArrayList<String> users = new ArrayList<>();
+    private Notification notification;
+    private String message;
 
-    public Serv2Cli(Notification request){
-        this.notification = request;
+    public Serv2Cli(Notification notification, String message) {
+        this.notification = notification;
+        this.message = message;
     }
 
-    public void addUsers(String ... users2add) {
-        for (String user : users2add)
-            users.add(user);
+    public Serv2Cli(Notification notification) {
+        this.notification = notification;
+    }
+
+    public String getMessage() {
+        return message;
     }
 
     public Notification getNotification() {

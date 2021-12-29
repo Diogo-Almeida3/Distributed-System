@@ -1,5 +1,6 @@
 package client.Logic;
 
+import Constants.Notification;
 import client.UI.Text.UIClient;
 import data.serv2cli.Serv2Cli;
 
@@ -17,6 +18,7 @@ public class ThreadServerTCP extends Thread{
     private boolean exit=false;
     private Client logic;
     private UIClient ui;
+    private Serv2Cli lastFileNotification = null;
 
     public ThreadServerTCP(Client logic, UIClient ui) throws IOException {
             if (logic==null||ui==null)
@@ -34,6 +36,10 @@ public class ThreadServerTCP extends Thread{
         return oisServ;
     }
 
+    public Serv2Cli getLastFileNotification() {
+        return lastFileNotification;
+    }
+
     public int getpPort() {return ss.getLocalPort(); }
 
     @Override
@@ -49,7 +55,9 @@ public class ThreadServerTCP extends Thread{
         while(!exit) {
             try {
                 serv2Cli = (Serv2Cli) oisServ.readObject();
-                ui.notification(serv2Cli.getNotification());
+                if (serv2Cli.getNotification() == Notification.NEW_FILE_AVAILABLE)
+                    lastFileNotification = serv2Cli;
+                ui.notification(serv2Cli.getNotification(),serv2Cli.getMessage());
             } catch (SocketException e) {
                 if (!exit) {
                     logic.connect2serv();

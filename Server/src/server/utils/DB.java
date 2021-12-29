@@ -116,7 +116,7 @@ public class DB {
         try {
             statement = dbConn.createStatement();
             String sqlQuery = "SELECT username, nome, estado, ultima_vez_online FROM Utilizador";
-            if (username != null)
+            if (username != null && !username.equalsIgnoreCase("all"))
                 sqlQuery += " WHERE nome like '%" + username + "%' or username like '%" + username + "%'";
 
             ResultSet resultSet = statement.executeQuery(sqlQuery);
@@ -208,6 +208,8 @@ public class DB {
 
     public boolean deleteContact(String username, String usernameDel) {
         if (username.equals(usernameDel))       // check self adding
+            return false;
+        if (!isContact(username,usernameDel)) // Check if usernameDel is a contact
             return false;
         try {
             Statement statement = dbConn.createStatement();
@@ -606,15 +608,9 @@ public class DB {
 
                 aux.append(username);
                 aux.append(": ");
-                if(resultSet.getString("tipo").equals("ficheiro")) {
+                if(resultSet.getString("tipo").equals("ficheiro"))
                     aux.append("[FILE] ");
-                    aux.append(resultSet.getString("id"));
-                    aux.append("-");
-                    aux.append(resultSet.getString("conteudo"));
-                }
-
-                else
-                    aux.append(resultSet.getString("conteudo"));
+                aux.append(resultSet.getString("conteudo"));
 
                 messages.add(aux.toString());
             }
@@ -654,15 +650,9 @@ public class DB {
 
                 aux.append(username);
                 aux.append(": ");
-                if(resultSet.getString("tipo").equals("ficheiro")) {
+                if(resultSet.getString("tipo").equals("ficheiro"))
                     aux.append("[FILE] ");
-                    aux.append(resultSet.getString("id"));
-                    aux.append("-");
-                    aux.append(resultSet.getString("conteudo"));
-                }
-
-                else
-                    aux.append(resultSet.getString("conteudo"));
+                aux.append(resultSet.getString("conteudo"));
 
                 messages.add(aux.toString());
             }

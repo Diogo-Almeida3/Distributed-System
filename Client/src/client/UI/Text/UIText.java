@@ -2,11 +2,10 @@ package client.UI.Text;
 
 import Constants.Notification;
 import client.Logic.Client;
-import jdk.jshell.execution.Util;
 
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class UIText implements UIClient {
     Client logic;
@@ -28,7 +27,7 @@ public class UIText implements UIClient {
         menuLoginReg();
         while (!exit) {
             System.out.println("Menu:");
-            switch (Utils.askOption("Menu Contacts", "Menu Groups", "Menu Profile", "Exit")) {
+            switch (Utils.askOption("Menu Contacts", "Menu Groups", "Menu Profile","Download last file available", "Exit")) {
                 case 0 -> {
                     logic.exitServer();
                     exit = true;
@@ -36,6 +35,12 @@ public class UIText implements UIClient {
                 case 1 -> contactsCommands();
                 case 2 -> groupsCommands();
                 case 3 -> profileCommands();
+                case 4 -> {
+                    if(logic.downloadLastFileAvailable())
+                        System.out.println("The download is being done in the background...");
+                    else
+                        System.out.println("There is no newly available file that can be downloaded!");
+                }
             }
         }
     }
@@ -84,7 +89,7 @@ public class UIText implements UIClient {
         if (logic.addContact(username))
             System.out.println("Contact invitation sent to " + username);
         else
-            System.out.println("User with name" + username + "not Found.");
+            System.out.println("User with name " + username + " not found.");
     }
 
     private void refuseContact() {
@@ -150,7 +155,7 @@ public class UIText implements UIClient {
 
     private void adminGroup() {
         System.out.println("Admin Group Menu");
-        switch (Utils.askOption("Rename group", "Accept group member", "Refuse group member", "Delete group member", "Delete group", "List waiting members", "Exit")) {
+        switch (Utils.askOption("Rename group", "Accept group member", "Refuse group member", "Delete group member", "Delete group", "List waiting members", "Go Back")) {
             case 0 -> {
             }
             case 1 -> rename();
@@ -302,12 +307,12 @@ public class UIText implements UIClient {
     }
 
     private void downloadFiles() {
-        String name = Utils.askString("Filename:");
+        int id = Utils.askInt("ID of file: ");
         try {
-            if(logic.downloadFileFrom(name))
-                System.out.println("File with name "+name+" downloaded in background");
+            if(logic.downloadFile(id))
+                System.out.println("File with id "+id+" downloaded in background");
             else
-                System.out.println("Failed to download the file with the name"+ name);
+                System.out.println("Failed to download the file with the id "+ id);
         } catch (IllegalArgumentException e) {
             System.out.println("Filename is not valid,try again..");
             return;
@@ -318,7 +323,7 @@ public class UIText implements UIClient {
 
     private void deleteFiles() {
         int id = Utils.askInt("Delete file with ID: ");
-        if (logic.deleteFileto(id))
+        if (logic.deleteFile(id))
             System.out.println("Your file with "+id+" was deleted sucessfully");
         else
             System.out.println("An error occurred while deleting the file with id "+ id);
@@ -386,8 +391,8 @@ public class UIText implements UIClient {
                 if (success)
                     System.out.println("Register with success!");
                 else {
-                    menuLoginReg();
                     System.out.println("It was not possible to register this user!");
+                    menuLoginReg();
                 }
             }
         }
@@ -396,23 +401,25 @@ public class UIText implements UIClient {
     /*--------------------------------------------------------- NOTIFICAÇÕES -------------------------------------------------------*/
 
     @Override
-    public void notification(Notification type) {
+    public void notification(Notification type,String message) {
         switch (type) {
-            case CONTACT_REQUEST -> System.out.println("\nYou have a new contact request!");
+            case CONTACT_REQUEST -> System.out.println("\nYou have a new contact request by "+message+"!");
 
-            case JOIN_GROUP_REQUEST -> System.out.println("\nYou have a new request to join in your group!");
+            case JOIN_GROUP_REQUEST -> System.out.println("\nYou have a new request to join in group "+message+"!");
 
-            case CONTACT_REQ_RESPONSE -> System.out.println("\nYou have a response to a contact request!");
+            case CONTACT_REQ_RESPONSE -> System.out.println("\nYou have a response to a contact request by "+message+"!");
 
-            case JOIN_GROUP_REQ_NEG_RESPONSE -> System.out.println("\nYou were not accepted into a group where you had sent a request to join!");
+            case JOIN_GROUP_REQ_NEG_RESPONSE -> System.out.println("\nYou were not accepted into a group "+message+" where you had sent a request to join!");
 
-            case MESSAGE -> System.out.println("\nYou have a new message!");
+            case MESSAGE -> System.out.println("\nYou have a new message from "+message+"!");
 
-            case MESSAGE_DELETE -> System.out.println("\nA message was deleted!");
+            case MESSAGE_DELETE -> System.out.println("\nA message was been deleted by "+message+"!");
 
-            case FILE -> System.out.println("\nYou have a new file to transfer!");
-
-            case NEW_FILE_AVAILABLE -> System.out.println("\nYou have a new file available!");
+            case NEW_FILE_AVAILABLE -> {
+                Scanner sc = new Scanner(System.in);
+                String aux[] = message.split("-");
+                System.out.println("\nYou have received the file \"" + aux[aux.length-1] + "\". Choose option \"4\" in main menu to download it...");
+            }
 
             case FILE_DELETE -> System.out.println("\nOne file has been deleted!");
 

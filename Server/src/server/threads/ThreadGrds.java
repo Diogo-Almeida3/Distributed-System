@@ -57,7 +57,7 @@ public class ThreadGrds extends Thread {
                 for (ThreadClient client : clients) {
                     for (String user : data.getUsers())
                         if (user.equals(client.getCliUsername()))
-                            client.notification(data.getType());
+                            client.notification(data.getType(),data.getMessage());
                 }
             }
         } catch (IOException | ClassNotFoundException e) {

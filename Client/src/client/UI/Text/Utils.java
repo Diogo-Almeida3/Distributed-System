@@ -34,4 +34,15 @@ public class Utils {
         return value;
     }
 
+    public static int getNumFromDir(String string) {
+        Scanner scAux = new Scanner(string);
+        scAux.useDelimiter("/|-");
+        while (scAux.hasNext()) {
+            if (scAux.hasNextInt())
+                return scAux.nextInt();
+            scAux.next();
+        }
+        return -1;
+    }
+
 }

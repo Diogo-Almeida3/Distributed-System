@@ -1,18 +1,18 @@
 package data.cli2serv;
 
 public class Cli2ServGetFile extends Cli2Serv {
-    private String serverIp,filename;
-    private int serverPort;
+    private String serverIp, dir;
+    private int serverPort, id;
 
-    public Cli2ServGetFile(String filename) { // Constructor for the client
+    public Cli2ServGetFile(int id) { // Constructor for the client
         super(RequestType.GET_FILE);
-        this.filename = filename;
+        this.id = id;
     }
 
-    public Cli2ServGetFile(String serverIp, int serverPort,String filename) { // Constructor for the server
+    public Cli2ServGetFile(String serverIp, int serverPort,String dir) { // Constructor for the server
         super(RequestType.GET_FILE);
         this.serverIp = serverIp;
-        this.filename = filename;
+        this.dir = dir;
         this.serverPort = serverPort;
     }
 
@@ -20,11 +20,15 @@ public class Cli2ServGetFile extends Cli2Serv {
         return serverIp;
     }
 
-    public String getFilename() {
-        return filename;
-    }
-
     public int getServerPort() {
         return serverPort;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getDir() {
+        return dir;
     }
 }

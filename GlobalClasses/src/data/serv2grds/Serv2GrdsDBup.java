@@ -8,6 +8,7 @@ import java.util.Collection;
 public class Serv2GrdsDBup extends Serv2Grds {
     private ArrayList<String> users = new ArrayList<>();
     private Notification type;
+    private String message;
 
     private String ServerIp = null;
     private int ServerPort = 0;
@@ -37,6 +38,14 @@ public class Serv2GrdsDBup extends Serv2Grds {
             addUsers(users2add);
         this.ServerPort = serverPort;
         this.type = type;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     public void setIp(String ip, int port) { ServerIp = ip; ServerPort = port; }

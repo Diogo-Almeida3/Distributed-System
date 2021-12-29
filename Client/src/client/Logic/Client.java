@@ -1,8 +1,10 @@
 package client.Logic;
 
 import client.UI.Text.UIClient;
+import client.UI.Text.Utils;
 import data.Cli2Grds;
 import data.cli2serv.*;
+import data.serv2cli.Serv2Cli;
 
 import java.io.*;
 import java.net.*;
@@ -257,7 +259,6 @@ public class Client {
     }
 
     public boolean deleteContact(String usernameDel) {
-
         if (!isLogged) return false;
 
         Cli2ServDel deleContact = new Cli2ServDel(username,usernameDel);
@@ -569,23 +570,42 @@ public class Client {
     }
 
 
-    public boolean downloadFileFrom(String dir)throws IllegalArgumentException, IOException, ClassNotFoundException {
+    public boolean downloadFile(int id)throws IllegalArgumentException, IOException, ClassNotFoundException {
         if(!isLogged) return false;
+        if (id < 0)
+            throw new IllegalArgumentException();
 
-        Cli2ServGetFile getFile = new Cli2ServGetFile(dir);
+        Cli2ServGetFile getFile = new Cli2ServGetFile(id);
 
         out2serv.writeObject(getFile);
         getFile = (Cli2ServGetFile) inServ.readObject();
 
-        if (getFile.getFilename() == null) // You sent a file name not recognized by the server
+        if (getFile.getDir() == null) // You sent a file name not recognized by the server
             throw new IllegalArgumentException();
 
-        ThreadReceivedFiles threadReceivedFiles = new ThreadReceivedFiles(getFile.getServerIp(),getFile.getServerPort(),getFile.getFilename(),username);
+        ThreadReceivedFiles threadReceivedFiles = new ThreadReceivedFiles(getFile.getServerIp(),getFile.getServerPort(),getFile.getDir(),username);
         threadReceivedFiles.start();
         return true;
     }
 
-    public boolean deleteFileto(int idFile) {
+    public boolean downloadLastFileAvailable() {
+        Serv2Cli lastNotification = threadServerTCP.getLastFileNotification();
+        if (lastNotification == null) return false;
+
+        String dir = lastNotification.getMessage();
+        if (dir == null) return false;
+
+        int id = Utils.getNumFromDir(dir);
+        if (id < 0) return false;
+
+        try {
+            return downloadFile(id);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean deleteFile(int idFile) {
         if(!isLogged) return false;
 
         Cli2ServDelFile delFile = new Cli2ServDelFile(username,idFile);

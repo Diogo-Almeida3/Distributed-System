@@ -46,7 +46,7 @@ public class ThreadReceivedFiles extends Thread {
             /* Transfer the file*/
             byte [] buf = new byte[512];
             int tam;
-            while((tam = in.read(buf)) != -1) // TODO bloqueia aqui
+            while((tam = in.read(buf)) != -1)
                 fos.write(buf,0,tam);
 
             oos.close();
