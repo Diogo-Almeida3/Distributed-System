@@ -51,11 +51,9 @@ public class ThreadReceivedFiles extends Thread {
             /* Transfer the file*/
             byte [] buf = new byte[512];
             int tam;
-            System.err.println("A receber");
-            while((tam = in.read(buf)) > 0) { // Todo não sai deste ciclo
+            while((tam = in.read(buf)) > 0) {
                 fos.write(buf,0,tam);
             }
-            System.err.println("Ficheiro recebido com sucesso");
             fos.flush();
             fos.close();
         } catch (IOException | SQLException e) {

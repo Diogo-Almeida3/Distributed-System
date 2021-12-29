@@ -75,7 +75,7 @@ public class Client {
     }
 
     public void inicialComsReceived() throws IOException {
-        DatagramPacket dpReceived = new DatagramPacket(new byte[5000], 5000); // TODO: Diminuir tamanho do array
+        DatagramPacket dpReceived = new DatagramPacket(new byte[5000], 5000);
         ds.setSoTimeout(15 * 1000 );
         ds.receive(dpReceived);
 

@@ -26,7 +26,7 @@ public class UIText implements UIClient {
     public void run() {
         menuLoginReg();
         while (!exit) {
-            System.out.println("Menu:");
+            System.out.println(logic.getUsername() + " - Menu:");
             switch (Utils.askOption("Menu Contacts", "Menu Groups", "Menu Profile","Download last file available", "Exit")) {
                 case 0 -> {
                     logic.exitServer();
@@ -416,20 +416,22 @@ public class UIText implements UIClient {
             case MESSAGE_DELETE -> System.out.println("\nA message was been deleted by "+message+"!");
 
             case NEW_FILE_AVAILABLE -> {
-                Scanner sc = new Scanner(System.in);
                 String aux[] = message.split("-");
                 System.out.println("\nYou have received the file \"" + aux[aux.length-1] + "\". Choose option \"4\" in main menu to download it...");
             }
 
-            case FILE_DELETE -> System.out.println("\nOne file has been deleted!");
+            case FILE_DELETE -> {
+                String aux[] = message.split("-");
+                System.out.println("\nFile \""+aux[aux.length-1]+"\" has been deleted!");
+            }
 
-            case GROUP_DELETE -> System.out.println("\nA group you were in was deleted!");
+            case GROUP_DELETE -> System.out.println("\nThe group "+message+" where you were has been deleted!");
 
-            case CONTACT_DELETE -> System.out.println("\nA contact of yours was deleted!");
+            case CONTACT_DELETE -> System.out.println("\n"+message+" removed your contact!");
 
-            case LEAVE_GROUP -> System.out.println("\nOne user has left of your group!");
+            case LEAVE_GROUP -> System.out.println("\n"+message+" has left of your group!");
 
-            case ACCEPT_MEMBER -> System.out.println("\nYou have been accepted into a group!");
+            case ACCEPT_MEMBER -> System.out.println("\nYou have been accepted into a group "+message+"!");
 
             case EDIT_GROUP -> System.out.println("\nThe name of the group you are in has been edited.");
 
