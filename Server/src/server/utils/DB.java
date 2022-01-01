@@ -181,7 +181,7 @@ public class DB {
                 String sqlQueryRegist = "INSERT INTO Utilizador_has_Utilizador VALUES ('" + username.toLowerCase() + "','" + addUsername.toLowerCase() + "',true)";
                 statement.executeUpdate(sqlQueryRegist);
             } else {
-                String sqlQuery = "UPDATE Utilizador_has_Utilizador SET isPendenteContacto=false WHERE Utilizador_username like '" + username + "' AND Utilizador_username1 like '" + addUsername + "' OR Utilizador_username like '" + addUsername + "' AND Utilizador_username1 like '" + username + "'";
+                String sqlQuery = "UPDATE Utilizador_has_Utilizador SET isPendenteContacto=false WHERE Utilizador_username like '" + addUsername + "' AND Utilizador_username1 like '" + username + "'";
                 statement.executeUpdate(sqlQuery);
             }
             statement.close();

@@ -46,12 +46,25 @@ public class ThreadGrds extends Thread {
                 ObjectInputStream ois = new ObjectInputStream(bais);
                 Serv2GrdsDBup data = (Serv2GrdsDBup) ois.readObject();
 
-                if(data.getType() == Notification.NEW_FILE_AVAILABLE) {
-                    ThreadReceivedFiles threadReceivedFiles =  new ThreadReceivedFiles(data.getServerIp(),data.getServerPort(),data.getFileId());
-                    threadReceivedFiles.start();
-                } else if (data.getType() == Notification.FILE_DELETE) {
-                    File f = new File(serverDirectory +  data.getExtra());
-                    f.delete();
+                switch (data.getType()) {
+                    case NEW_FILE_AVAILABLE -> {
+                        ThreadReceivedFiles threadReceivedFiles =  new ThreadReceivedFiles(data.getServerIp(),data.getServerPort(),data.getFileId());
+                        threadReceivedFiles.start();
+                    }
+                    case FILE_DELETE -> {
+                        File f = new File(serverDirectory +  data.getExtra());
+                        f.delete();
+                    }
+                    case GROUP_DELETE -> {
+                        File folder = new File(serverDirectory +  "/Group-" + data.getMessage());
+                        File[] allContents = folder.listFiles();
+                        if (allContents != null) {
+                            for (File file : allContents) {
+                                file.delete();
+                            }
+                        }
+                        folder.delete();
+                    }
                 }
 
                 for (ThreadClient client : clients) {
