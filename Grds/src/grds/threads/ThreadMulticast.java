@@ -18,33 +18,35 @@ public class ThreadMulticast extends Thread {
         MulticastSocket ms = null;
         DatagramSocket ds = null;
         try {
-            // Receive request on multicast
-            ms = new MulticastSocket(Multicast.MULTICAST_GRDS_SEARCH_PORT);
-            InetAddress mulIP = InetAddress.getByName(Multicast.MULTICAST_GRDS_SEARCH_IP);
-            InetSocketAddress isa = new InetSocketAddress(mulIP, Multicast.MULTICAST_GRDS_SEARCH_PORT);
-            NetworkInterface ni = NetworkInterface.getByName("wlan1");
-            ms.joinGroup(isa,ni);
+            while (true) {
+                // Receive request on multicast
+                ms = new MulticastSocket(Multicast.MULTICAST_GRDS_SEARCH_PORT);
+                InetAddress mulIP = InetAddress.getByName(Multicast.MULTICAST_GRDS_SEARCH_IP);
+                InetSocketAddress isa = new InetSocketAddress(mulIP, Multicast.MULTICAST_GRDS_SEARCH_PORT);
+                NetworkInterface ni = NetworkInterface.getByName(Multicast.getNetworkInterface());
+                ms.joinGroup(isa,ni);
 
-            DatagramPacket dp = new DatagramPacket(new byte[256],256);
-            ms.receive(dp);
+                DatagramPacket dp = new DatagramPacket(new byte[256],256);
+                ms.receive(dp);
 
-            ByteArrayInputStream bais = new ByteArrayInputStream(dp.getData(),0 ,dp.getLength());
-            ObjectInputStream oin = new ObjectInputStream(bais);
+                ByteArrayInputStream bais = new ByteArrayInputStream(dp.getData(),0 ,dp.getLength());
+                ObjectInputStream oin = new ObjectInputStream(bais);
 
-            Integer port = (Integer) oin.readObject();
+                Integer port = (Integer) oin.readObject();
 
-            // Send port to server
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(myPort);
-            oos.flush();
+                // Send port to server
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(baos);
+                oos.writeObject(myPort);
+                oos.flush();
 
-            dp.setPort(port);
-            dp.setData(baos.toByteArray());
-            dp.setLength(baos.size());
+                dp.setPort(port);
+                dp.setData(baos.toByteArray());
+                dp.setLength(baos.size());
 
-            ds = new DatagramSocket(0);
-            ds.send(dp);
+                ds = new DatagramSocket(0);
+                ds.send(dp);
+            }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         } finally {

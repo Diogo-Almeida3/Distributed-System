@@ -383,7 +383,7 @@ public class ThreadClient extends Thread {
                                 case REFUSE_MEMBER -> {
                                     if(db.refuseMember(cli2ServAdminGroup.getIdGroup(),cli2ServAdminGroup.getRefuseUser())) {
 
-                                        Serv2GrdsDBup aux =new Serv2GrdsDBup(Notification.JOIN_GROUP_REQ_POS_RESPONSE,cli2ServAdminGroup.getAcceptUser());
+                                        Serv2GrdsDBup aux =new Serv2GrdsDBup(Notification.JOIN_GROUP_REQ_NEG_RESPONSE,cli2ServAdminGroup.getRefuseUser());
                                         aux.setMessage(cli2ServAdminGroup.getIdGroup() +"");
                                         send2GRDS(aux);
 

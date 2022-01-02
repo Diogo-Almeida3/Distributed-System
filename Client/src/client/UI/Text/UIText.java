@@ -295,7 +295,7 @@ public class UIText implements UIClient {
         try {
             switch (op) {
                 case 1 -> logic.sendFileTo(Utils.askString("File to: "), Utils.askString("File directory: "));
-                case 2 -> logic.sendFileTo(Utils.askInt("Group ID: "), Utils.askString("File name: "));
+                case 2 -> logic.sendFileTo(Utils.askInt("Group ID: "), Utils.askString("File directory: "));
             }
             System.out.println("Your file is being sent in the background...");
         } catch (IllegalArgumentException e) {

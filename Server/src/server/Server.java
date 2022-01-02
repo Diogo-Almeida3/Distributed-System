@@ -20,14 +20,6 @@ public class Server {
     private ServerSocket socketReceiveConnections;
     private static final String serverDirectory = "./Files/"+ ManagementFactory.getRuntimeMXBean().getName();
 
-
-    /*
-    * 1 -> Ligar o Servidor ✔
-    * 2 -> Tratar das coordenadas ✔
-    * 3 -> Ligar-se a um socket udp com o Grds ✔
-    * 4 -> Enviar o porto TCP para o grds conseguir informar os clientes ✔️
-    * 5 -> ...
-    */
     public Server(String[] args) throws SQLException {
         int tries = 0;
         ThreadPing threadPing;

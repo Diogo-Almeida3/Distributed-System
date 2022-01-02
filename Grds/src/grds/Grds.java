@@ -81,7 +81,7 @@ public class Grds {
                 ms = new MulticastSocket(Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
                 mulIP = InetAddress.getByName(Multicast.MULTICAST_GRDS_IP_DIFFUSION);
                 InetSocketAddress isa = new InetSocketAddress(mulIP, Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
-                NetworkInterface ni = NetworkInterface.getByName("wlan1");
+                NetworkInterface ni = NetworkInterface.getByName(Multicast.getNetworkInterface());
                 ms.joinGroup(isa,ni);
             } catch (IOException e) {
                 System.err.println(e.getMessage());
@@ -151,7 +151,7 @@ public class Grds {
                                     }
                                 }
                             }
-                            default -> System.err.println("Request of server "+datagramPacket.getAddress().getHostAddress()+"is not possible");
+                            default -> System.err.println("Request of server "+datagramPacket.getAddress().getHostAddress()+" is not possible");
                         }
                     }
                     // ====================== End Server Communication =======================

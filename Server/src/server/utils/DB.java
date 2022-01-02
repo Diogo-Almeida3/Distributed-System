@@ -142,7 +142,7 @@ public class DB {
         ArrayList<String> contacts = new ArrayList<>();
         ArrayList<String> listOfContacts = new ArrayList<>();
 
-        String sqlQuery = "SELECT * from Utilizador_has_Utilizador where Utilizador_username='"+reqUsername+"' or Utilizador_username1='"+reqUsername+"' and isPendenteContacto="+false;
+        String sqlQuery = "SELECT * from Utilizador_has_Utilizador where (Utilizador_username='"+reqUsername+"' or Utilizador_username1='"+reqUsername+"') and isPendenteContacto="+false;
 
         ResultSet resultSet = statement.executeQuery(sqlQuery);
 
@@ -215,8 +215,8 @@ public class DB {
             Statement statement = dbConn.createStatement();
             Statement statement1 = dbConn.createStatement();
 
-            String sqlQueryDeleteContact = "DELETE FROM Utilizador_has_Utilizador WHERE Utilizador_username LIKE '" + username + "' AND Utilizador_username1 like '" + usernameDel + "'";
-            String sqlQueryDeleteMessages = "DELETE FROM Mensagem WHERE Utilizador_username LIKE '" + username + "' AND Utilizador_username1 LIKE '" + usernameDel + "' AND Grupo_id='0'";
+            String sqlQueryDeleteContact = "DELETE FROM Utilizador_has_Utilizador  WHERE( Utilizador_username LIKE '" + username + "' AND Utilizador_username1 like '" + usernameDel + "')OR (Utilizador_username1 LIKE '" + username + "' AND Utilizador_username like '" + usernameDel+"')";
+            String sqlQueryDeleteMessages = "DELETE FROM Mensagem WHERE ( Utilizador_username LIKE '" + username + "' AND Utilizador_username1 LIKE '" + usernameDel + "' ) OR (Utilizador_username1 LIKE '" + username + "' AND Utilizador_username LIKE '" + usernameDel+"') AND Grupo_id='0'";
             statement.executeUpdate(sqlQueryDeleteContact);
             statement1.executeUpdate(sqlQueryDeleteMessages);
 

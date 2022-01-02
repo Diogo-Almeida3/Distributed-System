@@ -35,7 +35,7 @@ public class ThreadGrds extends Thread {
 
             InetAddress mulIP = InetAddress.getByName(Multicast.MULTICAST_GRDS_IP_DIFFUSION);
             InetSocketAddress isa = new InetSocketAddress(mulIP,Multicast.MULTICAST_GRDS_PORT_DIFFUSION);
-            NetworkInterface ni = NetworkInterface.getByName("wlan1");
+            NetworkInterface ni = NetworkInterface.getByName(Multicast.getNetworkInterface());
             ms.joinGroup(isa,ni);
 
             while (true) {
