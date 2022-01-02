@@ -25,6 +25,15 @@ public class ThreadReceivedFiles extends Thread {
     public void run() {
 
         try {
+            DB db = new DB();
+            String filename = db.getFileDirectory(idOfFile);
+
+            /* Create file path filename -> /sender/file*/
+            File f = new File( serverDirectory + filename);
+
+            if (f.isFile()) // If this server already has the file then it will not download it
+                return;
+
             /* Open TCP with the server that own the file */
             Socket socketReceiveFile = new Socket(serverIp,serverPort);
 
@@ -32,17 +41,8 @@ public class ThreadReceivedFiles extends Thread {
             OutputStream out = socketReceiveFile.getOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(out);
 
-            DB db = new DB();
-            String filename = db.getFileDirectory(idOfFile);
-
             /* Inform the server of which file he wants to transfer */
             oos.writeObject(filename);
-
-            /* Create file path filename -> /sender/file*/
-            File f = new File( serverDirectory + filename);
-
-            if (f.isFile()) // If this server already has the file then it will not download it
-                return;
 
             f.getParentFile().mkdirs();
             f.createNewFile();
