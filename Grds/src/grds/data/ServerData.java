@@ -26,6 +26,8 @@ public class ServerData extends InetSocketAddress {
         return Calendar.getInstance().getTimeInMillis() - lastPinged > 60 * 1000;
     }
 
+    public long getSecondsOfLasTime() {return ((Calendar.getInstance().getTimeInMillis() - lastPinged)/1000) % 60; }
+
     public int getNumTimeouts() {
         return Math.toIntExact((Calendar.getInstance().getTimeInMillis() - lastPinged) / (20 * 1000));
     }

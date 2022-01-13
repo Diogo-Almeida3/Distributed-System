@@ -1,6 +1,8 @@
 package grds;
 
 import Constants.Multicast;
+import InterfacesRMI.GetRemoteGrdsInterface;
+import InterfacesRMI.GetRemoteMeta3AppInterface;
 import data.Cli2Grds;
 import data.serv2grds.Serv2Grds;
 import data.serv2grds.Serv2GrdsDBup;
@@ -11,22 +13,32 @@ import grds.threads.ThreadMulticast;
 import javax.naming.OperationNotSupportedException;
 import java.io.*;
 import java.net.*;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-public class Grds {
+public class Grds extends UnicastRemoteObject implements GetRemoteGrdsInterface {
     private ArrayList<ServerData> servers; // Active Servers
     private DatagramSocket datagramSocket;
     private int myport;
+    private CopyOnWriteArrayList<GetRemoteMeta3AppInterface> observers = new CopyOnWriteArrayList<>();
 
     public static void main(String[] args) {
         if (args.length == 0) {
             System.err.println("Invalid arguments! <GRDS_PORT>");
             return;
         }
-        new Grds(args);
+        try {
+            new Grds(args);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
-    public Grds(String[] args) {
+    public Grds(String[] args) throws RemoteException {
         try {
             myport = Integer.parseInt(args[0]);
             datagramSocket = new DatagramSocket(myport); // If it is not possible to open on this port it could mean that there is already an instance of grds running
@@ -38,14 +50,14 @@ public class Grds {
             return;
         }
         servers = new ArrayList<>();
-
+        RegisterGrds();
 
         // ========================== Threads ==========================
         ThreadReceivedServers threadReceivedServers = new ThreadReceivedServers();
         threadReceivedServers.start();
         ThreadMulticast threadMulticast = new ThreadMulticast(myport);
         threadMulticast.start();
-        ThreadCheckServs threadCheckServs = new ThreadCheckServs(servers);
+        ThreadCheckServs threadCheckServs = new ThreadCheckServs(servers,observers);
         threadCheckServs.start();
         System.out.println("============================== GRDS Ready ==============================");
         try {
@@ -63,6 +75,16 @@ public class Grds {
         }
         // ===============================================================
 
+    }
+
+    private void RegisterGrds(){
+        try {
+            Registry registry = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
+            registry.rebind("GRDS_Service",this);
+            System.out.println("Grds is running");
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -116,6 +138,8 @@ public class Grds {
                                 datagramSocket.send(datagramPacket);
 
                                 System.out.println("New Server Registered! --> " + datagramPacket.getAddress().getHostAddress() + ":" + data.getPort());
+                                for (GetRemoteMeta3AppInterface obs : observers)
+                                    obs.notify("New Server Registered! --> " + datagramPacket.getAddress().getHostAddress() + ":" + data.getPort());
                             }
                             case PING -> {
                                 System.out.println("Ping server "+data.getId()+"! --> " + datagramPacket.getAddress().getHostAddress());
@@ -129,6 +153,11 @@ public class Grds {
                                     Serv2GrdsDBup db_update_data = (Serv2GrdsDBup) data;
 
                                     System.out.println("Difusion " + db_update_data.getType());
+
+                                    // Send notification to observers
+                                    for (GetRemoteMeta3AppInterface obs : observers)
+                                        obs.notify(db_update_data.getType().toString());
+
                                     if (ms != null) {
                                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                                         ObjectOutputStream oos = new ObjectOutputStream(baos);
@@ -178,8 +207,9 @@ public class Grds {
                             datagramPacket.setData(baos.toByteArray());
                             datagramPacket.setLength(baos.size());
                             java.lang.System.out.println("Server "+serv.getAddress().getHostAddress()+" assigned to client " + datagramPacket.getAddress().getHostAddress());
-                             ds.send(datagramPacket);
-
+                            ds.send(datagramPacket);
+                            for (GetRemoteMeta3AppInterface obs : observers)
+                                obs.notify("Client with IP: " + datagramPacket.getAddress().getHostAddress() + ":" +datagramPacket.getPort()+ " contact GRDS");
                         } catch (OperationNotSupportedException e) { // No active servers, informs client to terminate
                             datagramPacket.setData(new byte[0]);
                             datagramPacket.setLength(0);
@@ -214,5 +244,27 @@ public class Grds {
             }
         }
         return servMin;
+    }
+
+    @Override
+    public void getAllServersInfo(GetRemoteMeta3AppInterface cliRef) throws IOException {
+        ArrayList<String> servs = new ArrayList<>();
+
+        for (ServerData serv : servers) {
+            servs.add("[SERVER"+serv.getIdentifier()+"] Ip: " + serv.getAddress().getHostAddress() + ":"+serv.getPort() +
+                    " - Elapsed time in seconds since the last ping: " + (int)serv.getSecondsOfLasTime() + " - Number of clients: " + serv.getNumCli());
+        }
+
+        cliRef.sendServersInfo(servs);
+    }
+
+    @Override
+    public void addObserver(GetRemoteMeta3AppInterface cliRef) throws RemoteException {
+        observers.add(cliRef);
+    }
+
+    @Override
+    public void removeObserver(GetRemoteMeta3AppInterface cliRef) throws RemoteException {
+        observers.remove(cliRef);
     }
 }

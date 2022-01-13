@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/Client/Client.iml" filepath="$PROJECT_DIR$/Client/Client.iml" />
       <module fileurl="file://$PROJECT_DIR$/GlobalClasses/GlobalClasses.iml" filepath="$PROJECT_DIR$/GlobalClasses/GlobalClasses.iml" />
       <module fileurl="file://$PROJECT_DIR$/Grds/Grds.iml" filepath="$PROJECT_DIR$/Grds/Grds.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Meta3App/Meta3App.iml" filepath="$PROJECT_DIR$/Meta3App/Meta3App.iml" />
       <module fileurl="file://$PROJECT_DIR$/Server/Server.iml" filepath="$PROJECT_DIR$/Server/Server.iml" />
       <module fileurl="file://$PROJECT_DIR$/SistemaDistribuidoPpTP.iml" filepath="$PROJECT_DIR$/SistemaDistribuidoPpTP.iml" />
     </modules>
