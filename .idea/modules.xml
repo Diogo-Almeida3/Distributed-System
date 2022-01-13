@@ -8,6 +8,7 @@
       <module fileurl="file://$PROJECT_DIR$/Meta3App/Meta3App.iml" filepath="$PROJECT_DIR$/Meta3App/Meta3App.iml" />
       <module fileurl="file://$PROJECT_DIR$/Server/Server.iml" filepath="$PROJECT_DIR$/Server/Server.iml" />
       <module fileurl="file://$PROJECT_DIR$/SistemaDistribuidoPpTP.iml" filepath="$PROJECT_DIR$/SistemaDistribuidoPpTP.iml" />
+      <module fileurl="file://$PROJECT_DIR$/WebService/WebService.iml" filepath="$PROJECT_DIR$/WebService/WebService.iml" />
     </modules>
   </component>
 </project>
