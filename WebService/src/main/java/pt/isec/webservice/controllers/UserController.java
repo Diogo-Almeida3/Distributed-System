@@ -1,14 +1,26 @@
 package pt.isec.webservice.controllers;
 
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import com.google.gson.Gson;
+import com.mysql.cj.xdevapi.JsonArray;
+import org.springframework.web.bind.annotation.*;
+import pt.isec.webservice.Utils.DB;
 import pt.isec.webservice.models.User;
+
+import java.sql.SQLException;
 
 @RestController
 public class UserController
 {
+    private DB db;
+
+    public UserController(){
+        try {
+            db = new DB();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     @PostMapping("session")
     public User login(@RequestBody User user)
     {
@@ -17,8 +29,10 @@ public class UserController
         return user;
     }
 
-//    @PutMapping("user")
-//    public User editName(@Re User user){
-//        user.setUsername();
-//    }
+    @PutMapping("user")
+    public void editName(@RequestBody User user,String name){
+        Gson gson = new Gson();
+        gson.toJson(db.editName(user.getUsername(),name));
+        user.setUsername(name);
+    }
 }
