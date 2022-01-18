@@ -5,6 +5,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import pt.isec.webservice.Utils.Token;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -20,7 +22,7 @@ public class AuthorizationFilter extends OncePerRequestFilter
     {
         String token = httpServletRequest.getHeader("Authorization");
 
-        if (token != null && token.endsWith("_123"))
+        if (token != null && Token.isValid(token))
         {
             List<GrantedAuthority> authorities = new ArrayList<>();
             authorities.add(new SimpleGrantedAuthority("USER"));

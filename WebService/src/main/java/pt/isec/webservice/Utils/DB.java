@@ -256,4 +256,84 @@ public class DB {
             return;
         }
     }
+
+
+    public void saveToken(String username, String token) throws SQLException{
+
+        Statement statement = dbConn.createStatement();
+
+        String insertToken = "UPDATE Utilizador SET token='" + token +"', token_date='"
+                +  new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis()) + "' WHERE username='" + username + "'";
+
+        statement.executeUpdate(insertToken);
+        statement.close();
+    }
+
+    public boolean isValidToken(String token){
+        Statement statement = null;
+        try{
+            statement = dbConn.createStatement();
+
+            String isValidToken = "SELECT token_date FROM Utilizador WHERE token ='" + token + "'";
+
+            ResultSet resultSet = statement.executeQuery(isValidToken);
+
+            if (resultSet.next()) {
+                Timestamp token_date = resultSet.getTimestamp("token_date");
+                return  (Calendar.getInstance().getTime().getTime() - token_date.getTime()) < 200 * 60 * 1000;
+            }
+        }catch(SQLException e){
+            return false;
+        }
+        return false;
+    }
+
+    public String getNameByToken(String token) throws SQLException {
+        Statement statement = dbConn.createStatement();
+
+        String usernameQuery = "SELECT username FROM Utilizador WHERE token ='" + token + "'";
+
+        ResultSet resultSet = statement.executeQuery(usernameQuery);
+        boolean hasResult = resultSet.next();
+        String username = null;
+        if (hasResult)
+             username = resultSet.getString("username");
+        statement.close();
+        return username;
+    }
+
+    public ArrayList<String> listGroups() {
+        Statement statement;
+        Statement statement1;
+        ArrayList<String> groupInfo = new ArrayList<>();
+        try {
+            statement = dbConn.createStatement();
+            String sqlQuery = "SELECT id,nome,data_criacao,Utilizador_username FROM Grupo ";
+
+            ResultSet resultSet = statement.executeQuery(sqlQuery);
+            while (resultSet.next()) {
+                String groupName = resultSet.getString("nome");
+                String data = resultSet.getString("data_criacao");
+                String creatorName = resultSet.getString("Utilizador_username");
+                String groupID = resultSet.getString("id");
+
+                groupInfo.add("Group ID: " + groupID + " -> [" + groupName + "] - Creator: " + creatorName + " - Creation date: " + data);
+
+                String sqlQueryGetUsers = "Select Utilizador_username FROM Grupo_has_Utilizador WHERE isPendenteGrupo=" + false + " AND Grupo_id like '" + groupID + "'";
+                statement1 = dbConn.createStatement();
+                ResultSet resultSetUsers = statement1.executeQuery(sqlQueryGetUsers);
+                while (resultSetUsers.next()) {
+                    String user = resultSetUsers.getString("Utilizador_username");
+                    groupInfo.add("\t -> " + user);
+                }
+            }
+
+            resultSet.close();
+            statement.close();
+        } catch (SQLException e) {
+            return null;
+        }
+
+        return groupInfo;
+    }
 }

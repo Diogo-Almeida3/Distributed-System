@@ -1,13 +1,13 @@
 package pt.isec.webservice.controllers;
 
 import com.google.gson.Gson;
-import com.mysql.cj.xdevapi.JsonArray;
-import org.apache.tomcat.util.json.JSONParser;
 import org.springframework.web.bind.annotation.*;
 import pt.isec.webservice.Utils.DB;
-import pt.isec.webservice.models.User;
+import pt.isec.webservice.Utils.Token;
 
+import java.net.HttpURLConnection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("Contact")
@@ -15,24 +15,26 @@ public class ContactController
 {
     // GET Contacts/List
     @GetMapping("List")
-    public String getContactList()
+    public ArrayList<String> getContactList(@RequestHeader("Authorization") String token)
     {
-//        DB db = null;
-//        try {
-//            String token = httpServletRequest.getHeader("Authorization");
-//            Gson gson = new Gson();
-//            db = new DB();
-//            return gson.toJson(db.getContactList(username));
-//        } catch (SQLException e) {
-//            return null;
-//        }
-        return null;
+        DB db = null;
+        try {
+            db = new DB();
+            return db.getContactList(db.getNameByToken(token));
+        } catch (SQLException e) {
+            return null;
+        }
     }
 
     @DeleteMapping("")
-    public String deleteContact(@RequestParam(value = "id", required = true) String id)
+    public boolean deleteContact(@RequestHeader("Authorization") String token,@RequestParam(value = "contact", required = true) String contact)
     {
-        //TODO: Retornar todas as mensagens num grupo
-        return "Mensagem grupo";
+        DB db = null;
+        try {
+            db = new DB();
+            return db.deleteContact(Token.getUsername(token),contact);
+        } catch (SQLException e) {
+            return false;
+        }
     }
 }
