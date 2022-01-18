@@ -1,9 +1,8 @@
 package pt.isec.webservice.controllers;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import pt.isec.webservice.Utils.DB;
 import pt.isec.webservice.Utils.Token;
 
@@ -15,14 +14,18 @@ public class GroupController {
 
     // Get Groups
     @GetMapping("Group")
-    public ArrayList<String> listGroups()
+    public ResponseEntity<ArrayList<String>> listGroups(@RequestHeader("Authorization") String token)
     {
         DB db = null;
         try {
             db = new DB();
-            return db.listGroups();
+            ArrayList<String> groups = db.getGroups(db.getNameByToken(token));
+            if (groups != null)
+                return ResponseEntity.status(HttpStatus.OK).body(groups);
+            else
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         } catch (SQLException e) {
-            return null;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 }

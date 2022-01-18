@@ -3,6 +3,8 @@ package pt.isec.webservice.controllers;
 import com.google.gson.Gson;
 import com.mysql.cj.xdevapi.JsonArray;
 import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pt.isec.webservice.Utils.DB;
 import pt.isec.webservice.Utils.Token;
@@ -14,7 +16,7 @@ import java.sql.SQLException;
 public class UserController
 {
     @PostMapping("session")
-    public User login(@RequestBody User user)
+    public ResponseEntity<User> login(@RequestBody User user)
     {
         DB db = null;
         try {
@@ -23,21 +25,26 @@ public class UserController
                 user.setToken(Token.generateToken(user.getUsername()));
                 user.setPassword("**********");
             }
+            else
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (SQLException e) {
             e.printStackTrace();
-            return null;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-        return user;
+        return ResponseEntity.status(HttpStatus.OK).body(user);
     }
 
     @PutMapping("User")
-    public boolean editName(@RequestHeader("Authorization") String token,@RequestParam(value = "name", required = true) String name) {
+    public ResponseEntity<Boolean> editName(@RequestHeader("Authorization") String token,@RequestParam(value = "name", required = true) String name) {
         DB db = null;
         try {
             db = new DB();
-            return db.editName(name, db.getNameByToken(token));
+            if (db.editName(name, db.getNameByToken(token)))
+                return ResponseEntity.status(HttpStatus.OK).body(true);
+            else
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
         } catch (SQLException e) {
-            return false;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
         }
     }
 }

@@ -101,21 +101,23 @@ public class DB {
         ArrayList<String> userGroups = new ArrayList<>();
         try {
             Statement statement = dbConn.createStatement();
+            Statement statement2 = dbConn.createStatement();
             String getGroupsId = "SELECT Grupo_id from Grupo_has_Utilizador " +
                     "WHERE Utilizador_username='" + username + "' AND isPendenteGrupo='" + 0 + "'";
 
             ResultSet resultSet = statement.executeQuery(getGroupsId);
 
             while (resultSet.next()) {
-                String groupId = resultSet.getString("id");
+                int groupId = resultSet.getInt("Grupo_id");
                 String getGroups = "SELECT * FROM Grupo WHERE id='" + groupId + "'";
-                ResultSet resultSet1 = statement.executeQuery(getGroups);
+
+                ResultSet resultSet1 = statement2.executeQuery(getGroups);
 
                 while (resultSet1.next()) {
-                    String groupName = resultSet.getString("nome");
-                    String data = resultSet.getString("data_criacao");
-                    String creatorName = resultSet.getString("Utilizador_username");
-                    String groupID = resultSet.getString("id");
+                    String groupName = resultSet1.getString("nome");
+                    String data = resultSet1.getString("data_criacao");
+                    String creatorName = resultSet1.getString("Utilizador_username");
+                    String groupID = resultSet1.getString("id");
 
                     userGroups.add("Group ID: " + groupID + " -> [" + groupName + "] - Creator: " + creatorName + " - Creation date: " + data);
 
@@ -280,7 +282,7 @@ public class DB {
 
             if (resultSet.next()) {
                 Timestamp token_date = resultSet.getTimestamp("token_date");
-                return  (Calendar.getInstance().getTime().getTime() - token_date.getTime()) < 200 * 60 * 1000;
+                return  (Calendar.getInstance().getTime().getTime() - token_date.getTime()) < 2 * 60 * 1000;
             }
         }catch(SQLException e){
             return false;
@@ -300,40 +302,5 @@ public class DB {
              username = resultSet.getString("username");
         statement.close();
         return username;
-    }
-
-    public ArrayList<String> listGroups() {
-        Statement statement;
-        Statement statement1;
-        ArrayList<String> groupInfo = new ArrayList<>();
-        try {
-            statement = dbConn.createStatement();
-            String sqlQuery = "SELECT id,nome,data_criacao,Utilizador_username FROM Grupo ";
-
-            ResultSet resultSet = statement.executeQuery(sqlQuery);
-            while (resultSet.next()) {
-                String groupName = resultSet.getString("nome");
-                String data = resultSet.getString("data_criacao");
-                String creatorName = resultSet.getString("Utilizador_username");
-                String groupID = resultSet.getString("id");
-
-                groupInfo.add("Group ID: " + groupID + " -> [" + groupName + "] - Creator: " + creatorName + " - Creation date: " + data);
-
-                String sqlQueryGetUsers = "Select Utilizador_username FROM Grupo_has_Utilizador WHERE isPendenteGrupo=" + false + " AND Grupo_id like '" + groupID + "'";
-                statement1 = dbConn.createStatement();
-                ResultSet resultSetUsers = statement1.executeQuery(sqlQueryGetUsers);
-                while (resultSetUsers.next()) {
-                    String user = resultSetUsers.getString("Utilizador_username");
-                    groupInfo.add("\t -> " + user);
-                }
-            }
-
-            resultSet.close();
-            statement.close();
-        } catch (SQLException e) {
-            return null;
-        }
-
-        return groupInfo;
     }
 }

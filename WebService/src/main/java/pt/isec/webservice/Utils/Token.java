@@ -28,13 +28,12 @@ public class Token {
     }
 
     public static boolean isValid(String token) {
-        return true;
-//        DB db = null;
-//        try {
-//            db = new DB();
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//        return db.isValidToken(token);
+        DB db = null;
+        try {
+            db = new DB();
+            return db.isValidToken(token);
+        } catch (SQLException e) {
+            return false;
+        }
     }
 }
