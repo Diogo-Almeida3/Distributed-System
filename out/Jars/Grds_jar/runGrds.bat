@@ -1,1 +1,0 @@
-java -jar ./Grds.jar 9001

@@ -33,7 +33,8 @@ public class ContactController
     }
 
     @DeleteMapping("")
-    public ResponseEntity<Boolean> deleteContact(@RequestHeader("Authorization") String token,@RequestParam(value = "contact", required = true) String contact)
+    public ResponseEntity<Boolean> deleteContact(@RequestHeader("Authorization") String token,
+                                                 @RequestParam(value = "contact", required = true) String contact)
     {
         DB db = null;
         try {

@@ -14,7 +14,8 @@ public class MessageController
 {
     // Messsages/User?name=test
     @GetMapping("User")
-    public ResponseEntity<ArrayList<String>> getUserMessages(@RequestHeader("Authorization") String token, @RequestParam(value = "contact", required = true) String contact)
+    public ResponseEntity<ArrayList<String>> getUserMessages(@RequestHeader("Authorization") String token,
+                                                             @RequestParam(value = "contact", required = true) String contact)
     {
         DB db = null;
         try {
@@ -31,7 +32,8 @@ public class MessageController
 
     // Messages/Group/id=1
     @GetMapping("Group")
-    public ResponseEntity<ArrayList<String>> getGroupMessages(@RequestHeader("Authorization") String token, @RequestParam(value = "group", required = true) Integer contact)
+    public ResponseEntity<ArrayList<String>> getGroupMessages(@RequestHeader("Authorization") String token,
+                                                              @RequestParam(value = "group", required = true) Integer contact)
     {
         DB db = null;
         try {

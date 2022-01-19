@@ -15,7 +15,7 @@ import java.sql.SQLException;
 @RestController
 public class UserController
 {
-    @PostMapping("session")
+    @PostMapping("Session")
     public ResponseEntity<User> login(@RequestBody User user)
     {
         DB db = null;
@@ -35,7 +35,8 @@ public class UserController
     }
 
     @PutMapping("User")
-    public ResponseEntity<Boolean> editName(@RequestHeader("Authorization") String token,@RequestParam(value = "name", required = true) String name) {
+    public ResponseEntity<Boolean> editName(@RequestHeader("Authorization") String token,
+                                            @RequestParam(value = "name", required = true) String name) {
         DB db = null;
         try {
             db = new DB();

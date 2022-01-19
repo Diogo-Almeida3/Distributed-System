@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Meta3App:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Meta3App_jar</output-path>
+    <root id="archive" name="Meta3App.jar">
+      <element id="module-output" name="Meta3App" />
+      <element id="module-output" name="GlobalClasses" />
+    </root>
+  </artifact>
+</component>
