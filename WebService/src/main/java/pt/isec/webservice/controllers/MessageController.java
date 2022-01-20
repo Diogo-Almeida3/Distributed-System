@@ -33,12 +33,12 @@ public class MessageController
     // Messages/Group/id=1
     @GetMapping("Group")
     public ResponseEntity<ArrayList<String>> getGroupMessages(@RequestHeader("Authorization") String token,
-                                                              @RequestParam(value = "group", required = true) Integer contact)
+                                                              @RequestParam(value = "group", required = true) Integer groupId)
     {
         DB db = null;
         try {
             db = new DB();
-            ArrayList<String> groupsMessages = db.getMessagesFromGroup(db.getNameByToken(token),contact,200);
+            ArrayList<String> groupsMessages = db.getMessagesFromGroup(db.getNameByToken(token),groupId,200);
             if( groupsMessages ==null)
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
             else

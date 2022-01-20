@@ -31,7 +31,7 @@ public class WebServiceApplication {
                     .addFilterAfter(new AuthorizationFilter(),
                             UsernamePasswordAuthenticationFilter.class)
                     .authorizeRequests()
-                    .antMatchers(HttpMethod.POST, "/session").permitAll()
+                    .antMatchers(HttpMethod.POST, "/Session").permitAll()
                     .anyRequest().authenticated().and()
                     .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         }
